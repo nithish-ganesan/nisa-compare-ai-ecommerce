@@ -11,10 +11,17 @@ if (!USE_MEMORY_STORE) {
 }
 
 const app = express();
-const allowedOrigins = String(process.env.NISA_ALLOWED_ORIGINS || "")
+const defaultAllowedOrigins = [
+  "https://nisa-ecommerce.web.app",
+  "https://nisa.ecommerce.nithishg.com"
+];
+const allowedOrigins = [
+  ...defaultAllowedOrigins,
+  ...String(process.env.NISA_ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
-  .filter(Boolean);
+  .filter(Boolean)
+];
 
 app.use(express.json());
 app.use(cors({
