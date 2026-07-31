@@ -8,7 +8,11 @@ An AI-powered shopping comparison chatbot POC. The app extracts a product intent
 - Three.js / React Three Fiber animated assistant scene
 - Framer Motion chat transitions
 - Responsive dashboard, recommendation panel, and comparison grid
-- Spring Boot 3 / Java 21 backend skeleton
+- Firebase Hosting deployment
+- Node.js Firebase Functions API for auth, sale discovery, and comparison
+- Firestore-backed users and sessions
+- OAuth-style signed bearer tokens with persistent sessions until logout
+- Legacy Spring Boot 3 / Java 21 backend skeleton kept as a local/reference implementation
 - Clean provider, extraction, and recommendation service abstractions
 - Swagger-ready API dependency
 - Docker Compose for frontend/backend
@@ -38,32 +42,36 @@ npm run dev
 
 Open `http://127.0.0.1:5173`.
 
-The frontend calls `http://localhost:8080/api/v1/compare` when available. If the backend is not running, it falls back to deterministic local sample data so the POC remains usable.
+For local public-style testing, configure `VITE_API_URL` to point to a deployed API or run the Firebase emulator.
 
-## Run Backend
+## Run Node Backend
 
-Java 21 and Maven are required.
+The public-ready backend is implemented as Firebase Functions in `functions/`.
 
 ```bash
-cd backend
-mvn -s settings.xml package -DskipTests
-java -jar target/ai-commerce-engine-0.1.0.jar
+cd functions
+npm install
+npm run lint
 ```
 
-Swagger UI:
+For production deployment, create `functions/.env` with a stable secret:
 
-```text
-http://localhost:8080/swagger-ui.html
+```bash
+NISA_JWT_SECRET=replace-with-at-least-32-random-characters
 ```
 
-Compare API:
+Firebase endpoints are exposed through Hosting rewrites:
 
 ```http
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+GET  /api/v1/auth/me
+POST /api/v1/auth/logout
+GET  /api/v1/sales
 POST /api/v1/compare
-Content-Type: application/json
-
-{ "query": "I want to buy iPhone 15 256GB Black" }
 ```
+
+The older Java backend can still be run from `backend/` for local reference work, but it is no longer required for the Firebase POC.
 
 ## Docker
 
@@ -79,57 +87,33 @@ docker compose up
 
 This starts the Spring Boot backend and the static frontend server.
 
-## Public Deployment: Firebase Hosting + Cloud Run
-
-Firebase Hosting can serve the React frontend, but the Spring Boot API must be hosted publicly too. The recommended setup is:
-
-- Frontend: Firebase Hosting
-- Backend: Google Cloud Run
-- Auth/session secret: Cloud Run environment variable
-- User persistence for production: Firestore, Cloud SQL, or another managed database
-
-### Backend: Cloud Run
-
-Build and deploy the backend container from the repo root:
-
-```bash
-gcloud run deploy nisa-commerce-api \
-  --source backend \
-  --region asia-south1 \
-  --allow-unauthenticated \
-  --set-env-vars NISA_JWT_SECRET="replace-with-at-least-32-random-characters",NISA_ALLOWED_ORIGINS="https://your-firebase-project-id.web.app"
-```
-
-Copy the Cloud Run service URL after deployment. It will look similar to:
-
-```text
-https://nisa-commerce-api-xxxxx-uc.a.run.app
-```
-
-### Frontend: Firebase Hosting
+## Public Deployment: Firebase Hosting + Functions
 
 Create `frontend/.env.production`:
 
 ```bash
-VITE_API_URL=https://your-cloud-run-service-url/api/v1
+VITE_API_URL=/api/v1
 ```
 
 Then build and deploy:
 
 ```bash
 cd frontend
+npm install
 npm run build
 cd ..
-firebase deploy --only hosting
+firebase deploy --only functions,hosting --project nisa-ecommerce
 ```
 
-`firebase.json` is already configured to serve `frontend/dist` and support SPA refresh routes.
+`firebase.json` serves `frontend/dist`, supports SPA refresh routes, and rewrites `/api/**` to the `api` Firebase Function in `asia-south1`.
+
+Firebase Functions requires the Firebase project to be upgraded to the Blaze pay-as-you-go plan because Cloud Build and Cloud Functions APIs are used during deployment.
 
 ### Production Security Notes
 
 - `NISA_JWT_SECRET` must be stable and secret. If it changes, existing sessions become invalid.
-- `NISA_ALLOWED_ORIGINS` should include only your Firebase/custom domains.
-- The current POC keeps registered users and active sessions in memory. For real public use, move users and sessions to Firestore or Cloud SQL so accounts survive backend restarts and scale across instances.
+- Registered users and sessions are stored in Firestore by the Node Functions backend.
+- Enable Firestore in the Firebase project before opening auth to public users.
 - Do not commit real API keys, JWT secrets, Amazon keys, Flipkart keys, or Firebase service credentials.
 
 ## Documentation
