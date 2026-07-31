@@ -1,0 +1,16 @@
+[
+  {
+    "platform": "Amazon",
+    "productName": "Apple iPhone 15 256GB Black",
+    "price": 72490,
+    "rating": 4.6,
+    "offers": ["Prime delivery", "ICICI instant discount"]
+  },
+  {
+    "platform": "Flipkart",
+    "productName": "Apple iPhone 15 256GB Black",
+    "price": 71999,
+    "rating": 4.5,
+    "offers": ["Axis Bank offer", "Exchange bonus"]
+  }
+]
