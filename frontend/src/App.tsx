@@ -153,9 +153,12 @@ export function App() {
     try {
       const result = await compareProducts(trimmedQuery);
       setResponse(result);
-    } catch {
+    } catch (exception) {
       setResponse(null);
-      setError("Backend search is unavailable. Please make sure the Spring Boot API is running on port 8080.");
+      const backendMessage = axios.isAxiosError(exception) && typeof exception.response?.data?.message === "string"
+        ? exception.response.data.message
+        : "";
+      setError(backendMessage || "Backend search is unavailable. Please try again in a few seconds.");
     } finally {
       setLoading(false);
     }
