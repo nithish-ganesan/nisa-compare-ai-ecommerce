@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import {
@@ -13,26 +13,14 @@ import {
   ShieldCheck,
   ShoppingBag,
   Info,
-  Sparkles,
-  UserRound
+  Sparkles
 } from "lucide-react";
 import { ChatPanel } from "./components/ChatPanel";
 import { ComparisonTable } from "./components/ComparisonTable";
-import { clearAuthToken, compareProducts, fetchCurrentUser, fetchSales, loginAccount, logoutAccount, registerAccount, setAuthToken } from "./services/commerceApi";
-import type { AuthResult, ComparisonResponse, SaleEvent } from "./types/commerce";
-
-const AUTH_STORAGE_KEY = "nisa.auth.session";
+import { compareProducts, fetchSales } from "./services/commerceApi";
+import type { ComparisonResponse, SaleEvent } from "./types/commerce";
 
 export function App() {
-  const [authUser, setAuthUser] = useState<AuthResult | null>(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [authLogin, setAuthLogin] = useState("");
-  const [authUsername, setAuthUsername] = useState("");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState("");
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("India");
   const [showUnsupportedLocation, setShowUnsupportedLocation] = useState(false);
@@ -57,81 +45,11 @@ export function App() {
   ];
 
   useEffect(() => {
-    const storedSession = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!storedSession) {
-      setAuthReady(true);
-      return;
-    }
-    try {
-      const parsedSession = JSON.parse(storedSession) as AuthResult;
-      if (!parsedSession.token || parsedSession.expiresAt * 1000 <= Date.now()) {
-        window.localStorage.removeItem(AUTH_STORAGE_KEY);
-        setAuthReady(true);
-        return;
-      }
-      setAuthToken(parsedSession.token);
-      setAuthUser(parsedSession);
-      setAuthReady(true);
-      fetchCurrentUser()
-        .then((user) => setAuthUser({ ...parsedSession, username: user.username, email: user.email }))
-        .catch((exception) => {
-          const status = axios.isAxiosError(exception) ? exception.response?.status : undefined;
-          if (status === 401 || status === 403) {
-            clearAuthToken();
-            window.localStorage.removeItem(AUTH_STORAGE_KEY);
-            setAuthUser(null);
-          }
-        });
-    } catch {
-      window.localStorage.removeItem(AUTH_STORAGE_KEY);
-      setAuthReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!authUser) return;
     fetchSales()
       .then(setSales)
       .catch(() => setSales([]))
       .finally(() => setSalesLoading(false));
-  }, [authUser]);
-
-  async function submitAuth(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAuthLoading(true);
-    setAuthError("");
-    try {
-      const result = authMode === "login"
-          ? await loginAccount(authLogin, authPassword)
-          : await registerAccount(authUsername, authEmail, authPassword);
-      setAuthUser(result);
-      setAuthToken(result.token);
-      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(result));
-      setSalesLoading(true);
-    } catch (exception) {
-      const fallback = authMode === "login"
-          ? "No account found or password is wrong. Please register if you do not have an account."
-          : "Registration failed. Please check username, email, and password.";
-      setAuthError(fallback);
-    } finally {
-      setAuthLoading(false);
-    }
-  }
-
-  async function logout() {
-    try {
-      await logoutAccount();
-    } finally {
-      clearAuthToken();
-      window.localStorage.removeItem(AUTH_STORAGE_KEY);
-      setAuthUser(null);
-      setResponse(null);
-      setSales([]);
-      setQuery("");
-      setAuthPassword("");
-      setAuthMode("login");
-    }
-  }
+  }, []);
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -175,60 +93,6 @@ export function App() {
 
   return (
     <div className="portal">
-      {!authReady && (
-        <main className="auth-shell">
-          <section className="auth-brand">
-            <span>NiSa compare.in</span>
-            <h1>Restoring secure session</h1>
-            <p>Checking your saved login and preparing the comparison portal.</p>
-          </section>
-        </main>
-      )}
-
-      {authReady && !authUser && (
-        <main className="auth-shell">
-          <section className="auth-brand">
-            <span>NiSa compare.in</span>
-            <h1>Secure access for enterprise commerce comparison</h1>
-            <p>Create an account or login to use the AI shopping comparison chatbot, daily sale discovery, and trusted store recommendations.</p>
-          </section>
-          <section className="auth-card">
-            <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
-              <button type="button" className={authMode === "login" ? "active" : ""} onClick={() => { setAuthMode("login"); setAuthError(""); setAuthPassword(""); }}>Login</button>
-              <button type="button" className={authMode === "register" ? "active" : ""} onClick={() => { setAuthMode("register"); setAuthError(""); setAuthPassword(""); }}>Register</button>
-            </div>
-            <form onSubmit={submitAuth} autoComplete={authMode === "register" ? "off" : "on"}>
-              {authMode === "register" && (
-                <>
-                  <label>
-                    Username
-                    <input value={authUsername} onChange={(event) => setAuthUsername(event.target.value)} placeholder="Create username" minLength={3} autoComplete="username" required />
-                  </label>
-                  <label>
-                    Email
-                    <input type="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="name@company.com" autoComplete="email" required />
-                  </label>
-                </>
-              )}
-              {authMode === "login" && (
-                <label>
-                  Username or email
-                  <input value={authLogin} onChange={(event) => setAuthLogin(event.target.value)} placeholder="Enter username or email" autoComplete="username" required />
-                </label>
-              )}
-              <label>
-                Password
-                <input type="password" value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder="Minimum 8 characters" minLength={8} autoComplete={authMode === "register" ? "new-password" : "current-password"} required />
-              </label>
-              {authError && <p className="auth-error">{authError}</p>}
-              <button type="submit" disabled={authLoading}>{authLoading ? "Checking..." : authMode === "login" ? "Access portal" : "Create account"}</button>
-            </form>
-            <small>{authMode === "login" ? "No account yet? Register with us to continue." : "Already registered? Login with username/email and password."}</small>
-          </section>
-        </main>
-      )}
-
-      {authReady && authUser && (
       <>
       <header className="market-header">
         <div className="brand-block">
@@ -247,8 +111,6 @@ export function App() {
         <div className="top-search">
           <ChatPanel query={query} loading={loading} response={response} error={error} onQueryChange={updateQuery} onSearch={runSearch} />
         </div>
-        <button className="header-action"><UserRound size={18} /> {authUser.username}</button>
-        <button className="header-action" onClick={logout}>Logout</button>
       </header>
 
       {showUnsupportedLocation && (
@@ -338,7 +200,6 @@ export function App() {
         {response && <ComparisonTable offers={response.offers} />}
       </main>
       </>
-      )}
     </div>
   );
 }

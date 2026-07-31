@@ -103,7 +103,6 @@ app.post("/api/v1/auth/logout", async (req, res) => {
 
 app.get("/api/v1/sales", async (req, res) => {
   try {
-    await requireUser(req);
     const today = new Date();
     const day = today.toISOString().slice(0, 10);
     const addDays = (days) => new Date(today.getTime() + days * 86400000).toISOString().slice(0, 10);
@@ -121,7 +120,6 @@ app.get("/api/v1/sales", async (req, res) => {
 
 app.post("/api/v1/compare", async (req, res) => {
   try {
-    await requireUser(req);
     const query = String(req.body.query || "").trim();
     if (!query) return res.status(400).json({ message: "Query is required." });
     const intent = extractIntent(query);
