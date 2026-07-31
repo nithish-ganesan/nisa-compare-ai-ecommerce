@@ -13,8 +13,13 @@ export function ComparisonTable({ offers }: { offers: ProductOffer[] }) {
       </div>
       <aside className="comparison-disclaimer">
         <Info size={17} />
-        <span>AI-powered comparison: prices, discounts, delivery dates, and availability may vary on the actual seller platform. Click the seller link to view the exact amount before purchase.</span>
+        <span>AI-powered Google Shopping comparison via SerpAPI. Prices come from shopping results when available. Click the seller link to confirm the exact current amount before purchase.</span>
       </aside>
+      {offers.length === 0 && (
+        <div className="empty-comparison">
+          No verified seller offers found for this product. Try another brand or broader product keyword.
+        </div>
+      )}
       <div className="comparison-grid">
         <div className="grid-row grid-head">
           <span>Platform</span><span>Price</span><span>Offer</span><span>Rating</span><span>Delivery</span><span>Seller</span><span>Score</span><span></span>
@@ -26,9 +31,14 @@ export function ComparisonTable({ offers }: { offers: ProductOffer[] }) {
               <small className="product-name">{offer.productName}</small>
               <div className="badges">{offer.badges.map((badge) => <span key={badge}>{badge}</span>)}</div>
             </div>
-            <strong>Rs. {offer.price.toLocaleString("en-IN")}</strong>
-            <span>{offer.bankOffers[0]}</span>
-            <span className="rating"><Star size={15} /> {offer.rating}</span>
+            <div className="price-stack">
+              <strong>{offer.price ? `Rs. ${offer.price.toLocaleString("en-IN")}` : "View on site"}</strong>
+              {offer.maximumRetailPrice && offer.price && offer.maximumRetailPrice > offer.price && (
+                <small>MRP Rs. {offer.maximumRetailPrice.toLocaleString("en-IN")} · {offer.discount}% off</small>
+              )}
+            </div>
+            <span>{offer.bankOffers.filter(Boolean).slice(0, 2).join(" · ") || "Check seller page"}</span>
+            <span className="rating"><Star size={15} /> {offer.rating ? `${offer.rating}${offer.reviews ? ` (${offer.reviews})` : ""}` : "N/A"}</span>
             <span className="rating"><Truck size={15} /> {offer.estimatedDeliveryDate}</span>
             <span className="rating"><ShieldCheck size={15} /> {offer.sellerName}</span>
             <strong>{offer.score}</strong>

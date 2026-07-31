@@ -9,12 +9,14 @@ export type ProductIntent = {
 export type ProductOffer = {
   platform: string;
   productName: string;
-  price: number;
+  price: number | null;
+  maximumRetailPrice?: number | null;
   discount: number;
   deliveryCharges: number;
   estimatedDeliveryDate: string;
   sellerName: string;
   rating: number;
+  reviews?: number;
   availableOffers: string[];
   bankOffers: string[];
   exchangeOffer: string;

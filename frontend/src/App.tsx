@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import {
   BadgePercent,
@@ -24,6 +25,7 @@ const AUTH_STORAGE_KEY = "nisa.auth.session";
 
 export function App() {
   const [authUser, setAuthUser] = useState<AuthResult | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authLogin, setAuthLogin] = useState("");
   const [authUsername, setAuthUsername] = useState("");
@@ -56,22 +58,33 @@ export function App() {
 
   useEffect(() => {
     const storedSession = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!storedSession) return;
+    if (!storedSession) {
+      setAuthReady(true);
+      return;
+    }
     try {
       const parsedSession = JSON.parse(storedSession) as AuthResult;
       if (!parsedSession.token || parsedSession.expiresAt * 1000 <= Date.now()) {
         window.localStorage.removeItem(AUTH_STORAGE_KEY);
+        setAuthReady(true);
         return;
       }
       setAuthToken(parsedSession.token);
+      setAuthUser(parsedSession);
+      setAuthReady(true);
       fetchCurrentUser()
         .then((user) => setAuthUser({ ...parsedSession, username: user.username, email: user.email }))
-        .catch(() => {
-          clearAuthToken();
-          window.localStorage.removeItem(AUTH_STORAGE_KEY);
+        .catch((exception) => {
+          const status = axios.isAxiosError(exception) ? exception.response?.status : undefined;
+          if (status === 401 || status === 403) {
+            clearAuthToken();
+            window.localStorage.removeItem(AUTH_STORAGE_KEY);
+            setAuthUser(null);
+          }
         });
     } catch {
       window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      setAuthReady(true);
     }
   }, []);
 
@@ -159,7 +172,17 @@ export function App() {
 
   return (
     <div className="portal">
-      {!authUser && (
+      {!authReady && (
+        <main className="auth-shell">
+          <section className="auth-brand">
+            <span>NiSa compare.in</span>
+            <h1>Restoring secure session</h1>
+            <p>Checking your saved login and preparing the comparison portal.</p>
+          </section>
+        </main>
+      )}
+
+      {authReady && !authUser && (
         <main className="auth-shell">
           <section className="auth-brand">
             <span>NiSa compare.in</span>
@@ -168,31 +191,31 @@ export function App() {
           </section>
           <section className="auth-card">
             <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
-              <button type="button" className={authMode === "login" ? "active" : ""} onClick={() => { setAuthMode("login"); setAuthError(""); }}>Login</button>
-              <button type="button" className={authMode === "register" ? "active" : ""} onClick={() => { setAuthMode("register"); setAuthError(""); }}>Register</button>
+              <button type="button" className={authMode === "login" ? "active" : ""} onClick={() => { setAuthMode("login"); setAuthError(""); setAuthPassword(""); }}>Login</button>
+              <button type="button" className={authMode === "register" ? "active" : ""} onClick={() => { setAuthMode("register"); setAuthError(""); setAuthPassword(""); }}>Register</button>
             </div>
-            <form onSubmit={submitAuth}>
+            <form onSubmit={submitAuth} autoComplete={authMode === "register" ? "off" : "on"}>
               {authMode === "register" && (
                 <>
                   <label>
                     Username
-                    <input value={authUsername} onChange={(event) => setAuthUsername(event.target.value)} placeholder="Create username" minLength={3} required />
+                    <input value={authUsername} onChange={(event) => setAuthUsername(event.target.value)} placeholder="Create username" minLength={3} autoComplete="username" required />
                   </label>
                   <label>
                     Email
-                    <input type="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="name@company.com" required />
+                    <input type="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="name@company.com" autoComplete="email" required />
                   </label>
                 </>
               )}
               {authMode === "login" && (
                 <label>
                   Username or email
-                  <input value={authLogin} onChange={(event) => setAuthLogin(event.target.value)} placeholder="Enter username or email" required />
+                  <input value={authLogin} onChange={(event) => setAuthLogin(event.target.value)} placeholder="Enter username or email" autoComplete="username" required />
                 </label>
               )}
               <label>
                 Password
-                <input type="password" value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder="Minimum 8 characters" minLength={8} required />
+                <input type="password" value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder="Minimum 8 characters" minLength={8} autoComplete={authMode === "register" ? "new-password" : "current-password"} required />
               </label>
               {authError && <p className="auth-error">{authError}</p>}
               <button type="submit" disabled={authLoading}>{authLoading ? "Checking..." : authMode === "login" ? "Access portal" : "Create account"}</button>
@@ -202,7 +225,7 @@ export function App() {
         </main>
       )}
 
-      {authUser && (
+      {authReady && authUser && (
       <>
       <header className="market-header">
         <div className="brand-block">

@@ -3,13 +3,15 @@ import type { ComparisonResponse } from "../types/commerce";
 
 export function Dashboard({ response }: { response: ComparisonResponse | null }) {
   const best = response?.offers[0];
-  const averageRating = response
-    ? (response.offers.reduce((sum, item) => sum + item.rating, 0) / response.offers.length).toFixed(1)
+  const pricedOffers = response?.offers.filter((item) => item.price) ?? [];
+  const ratedOffers = response?.offers.filter((item) => item.rating > 0) ?? [];
+  const averageRating = ratedOffers.length
+    ? (ratedOffers.reduce((sum, item) => sum + item.rating, 0) / ratedOffers.length).toFixed(1)
     : "No data";
   const cards = [
     { label: "Best Value", value: best?.platform ?? "No data", icon: BrainCircuit },
-    { label: "Lowest Price", value: response ? `Rs. ${Math.min(...response.offers.map((item) => item.price)).toLocaleString("en-IN")}` : "No data", icon: TrendingUp },
-    { label: "Fastest", value: response?.offers.find((item) => item.estimatedDeliveryDate === "Tomorrow")?.platform ?? "No data", icon: Clock },
+    { label: "Lowest Price", value: pricedOffers.length ? `Rs. ${Math.min(...pricedOffers.map((item) => item.price || 0)).toLocaleString("en-IN")}` : "Open result", icon: TrendingUp },
+    { label: "Fastest", value: response?.offers.find((item) => item.estimatedDeliveryDate === "Tomorrow")?.platform ?? "Open result", icon: Clock },
     { label: "Providers", value: response ? String(response.offers.length) : "No data", icon: Heart },
     { label: "Avg Rating", value: averageRating, icon: Bell }
   ];

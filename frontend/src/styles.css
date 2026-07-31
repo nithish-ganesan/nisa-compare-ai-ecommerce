@@ -915,6 +915,15 @@ button, input { font: inherit; }
   line-height: 1.45;
 }
 
+.empty-comparison {
+  margin: 14px 0 4px;
+  border: 1px dashed rgba(100, 241, 218, 0.38);
+  border-radius: 8px;
+  padding: 18px;
+  color: #cbd5e1;
+  background: rgba(2, 6, 23, 0.34);
+}
+
 .comparison-grid {
   display: grid;
   overflow-x: auto;
@@ -954,6 +963,17 @@ button, input { font: inherit; }
   margin-top: 6px;
   color: #aab7c7;
   font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.price-stack {
+  display: grid;
+  gap: 4px;
+}
+
+.price-stack small {
+  color: #8fa3ba;
+  font-size: 0.78rem;
   line-height: 1.35;
 }
 

@@ -12,6 +12,7 @@ An AI-powered shopping comparison chatbot POC. The app extracts a product intent
 - Node.js Firebase Functions API for auth, sale discovery, and comparison
 - Firestore-backed users and sessions
 - OAuth-style signed bearer tokens with persistent sessions until logout
+- SerpAPI Google Shopping adapter for comparison results
 - Legacy Spring Boot 3 / Java 21 backend skeleton kept as a local/reference implementation
 - Clean provider, extraction, and recommendation service abstractions
 - Swagger-ready API dependency
@@ -58,7 +59,10 @@ For production deployment, create `functions/.env` with a stable secret:
 
 ```bash
 NISA_JWT_SECRET=replace-with-at-least-32-random-characters
+SERPAPI_KEY=your-serpapi-key
 ```
+
+The comparison API does not generate product prices. It calls SerpAPI Google Shopping with `engine=google_shopping`, maps `shopping_results`, and displays the returned title, price, source, and seller link. If SerpAPI does not return a price, the UI shows `View on site`.
 
 Firebase endpoints are exposed through Hosting rewrites:
 
@@ -86,6 +90,43 @@ docker compose up
 ```
 
 This starts the Spring Boot backend and the static frontend server.
+
+## Public Deployment: Firebase Hosting + Render API
+
+Use this option when Firebase Hosting should stay on Spark/free tier and the private SerpAPI key should live in a backend service.
+
+Deploy the API as a Render Web Service from this GitHub repo:
+
+```text
+Root directory: functions
+Build command: npm install
+Start command: npm start
+```
+
+Set these Render environment variables:
+
+```bash
+NISA_MEMORY_STORE=true
+NISA_JWT_SECRET=replace-with-at-least-32-random-characters
+SERPAPI_KEY=your-serpapi-key
+NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,http://127.0.0.1:5173
+```
+
+Then create `frontend/.env.production` with the Render API URL:
+
+```bash
+VITE_API_URL=https://your-render-backend.onrender.com/api/v1
+```
+
+Build and deploy only Firebase Hosting:
+
+```bash
+cd frontend
+npm install
+npm run build
+cd ..
+firebase deploy --only hosting --project nisa-ecommerce
+```
 
 ## Public Deployment: Firebase Hosting + Functions
 

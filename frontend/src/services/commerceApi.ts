@@ -3,7 +3,7 @@ import type { AuthResult, ComparisonResponse, SaleEvent } from "../types/commerc
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1",
-  timeout: 1500
+  timeout: 10000
 });
 
 let authToken = "";
