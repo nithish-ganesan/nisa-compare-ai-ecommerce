@@ -453,6 +453,23 @@ button, input { font: inherit; }
   isolation: isolate;
 }
 
+.scene {
+  width: min(430px, 100%);
+  aspect-ratio: 1 / 1;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  filter: drop-shadow(0 32px 44px rgba(15, 23, 42, 0.46));
+}
+
+.scene.is-dragging {
+  cursor: grabbing;
+}
+
+.scene canvas {
+  display: block;
+}
+
 .visual-core {
   width: min(330px, 100%);
   min-height: 230px;
@@ -1024,6 +1041,7 @@ button, input { font: inherit; }
   .sale-hero h1 { max-width: 760px; }
   .hero-feature-row { grid-template-columns: 1fr; }
   .hero-visual { min-height: 300px; }
+  .scene { width: min(380px, 82vw); }
   .sale-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .commerce-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1081,6 +1099,7 @@ button, input { font: inherit; }
     min-height: 260px;
     overflow: hidden;
   }
+  .scene { width: min(300px, 84vw); }
   .visual-core {
     width: min(280px, 90vw);
     min-height: 205px;
