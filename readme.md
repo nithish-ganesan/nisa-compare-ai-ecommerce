@@ -1,170 +1,206 @@
 # NiSa AI Commerce Engine
 
-An AI-powered shopping comparison chatbot POC. The app extracts a product intent, searches provider-style offer data, ranks purchase options, and presents the result in a premium responsive chat and comparison experience.
+NiSa AI Commerce Engine is an AI-powered shopping comparison POC. The app lets a user search in natural language, extracts the product intent, calls a live shopping-search backend, ranks offers, and shows sale discovery plus comparison results in a responsive commerce dashboard.
 
-## Implemented In This Repo
+Current live frontend:
 
-- React + Vite + TypeScript frontend
-- Three.js / React Three Fiber animated assistant scene
-- Framer Motion chat transitions
-- Responsive dashboard, recommendation panel, and comparison grid
-- Firebase Hosting deployment
-- Node.js Firebase Functions API for auth, sale discovery, and comparison
-- Firestore-backed users and sessions
-- OAuth-style signed bearer tokens with persistent sessions until logout
-- SerpAPI Google Shopping adapter for comparison results
-- Legacy Spring Boot 3 / Java 21 backend skeleton kept as a local/reference implementation
-- Clean provider, extraction, and recommendation service abstractions
-- Swagger-ready API dependency
-- Docker Compose for frontend/backend
-- Architecture, database, and sequence documentation
-- Sample product data
-
-## Run Frontend
-
-Recommended on this Windows machine:
-
-```bash
-cd frontend
-npm.cmd run start
+```text
+https://nisa-ecommerce.web.app
+https://nisa.ecommerce.nithishg.com
 ```
 
-Open `http://127.0.0.1:5175`.
+## Tech Used
 
-This serves the built app with a plain Node static server. It avoids Vite/esbuild dev-server process spawning, which can be blocked by Windows security policies.
+- React 19, Vite, and TypeScript for the frontend.
+- Axios for API communication.
+- Framer Motion for UI transitions.
+- Three.js / React Three Fiber for the animated commerce assistant scene.
+- Lucide React for UI icons.
+- Node.js, Express, and Firebase Functions style structure for the API in `functions/`.
+- Render Web Service for the currently used production API.
+- SerpAPI Google Shopping adapter for live product comparison data.
+- Firebase Hosting for public frontend deployment.
+- Firebase CLI / Firebase Hosting rewrites for SPA hosting.
+- Legacy Spring Boot 3 / Java 21 backend skeleton in `backend/` for local/reference architecture.
+- Docker and Docker Compose files for local container-based runs.
+- Firestore-ready auth/session code remains in the backend, but the current POC UI does not require login.
 
-Vite dev mode is still available for machines where `esbuild.exe` is allowed:
+## Current POC Flow
+
+- The frontend opens directly without login or registration.
+- Daily sales are loaded from the backend `/sales` endpoint.
+- Product search uses the backend `/compare` endpoint.
+- Production frontend uses this Render API URL from `frontend/.env.production`:
+
+```bash
+VITE_API_URL=https://nisa-compare-ai-ecommerce.onrender.com/api/v1
+```
+
+## Project Structure
+
+```text
+frontend/   React + Vite application
+functions/  Node.js Express API used by Render/Firebase Functions style deployment
+backend/    Legacy Spring Boot reference backend
+docs/       Architecture and design notes
+data/       Sample product data
+```
+
+## Run The Frontend Locally
+
+Install dependencies and build:
 
 ```bash
 cd frontend
 npm install
+npm run build
+```
+
+Start the local static server:
+
+```bash
+npm run start
+```
+
+Open:
+
+```text
+http://127.0.0.1:5175
+```
+
+For Vite dev mode:
+
+```bash
+cd frontend
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`.
+Open:
 
-For local public-style testing, configure `VITE_API_URL` to point to a deployed API or run the Firebase emulator.
+```text
+http://127.0.0.1:5173
+```
 
-## Run Node Backend
+## Run The Node API Locally
 
-The public-ready backend is implemented as Firebase Functions in `functions/`.
+The active API is in `functions/`.
 
 ```bash
 cd functions
 npm install
 npm run lint
+npm start
 ```
 
-For production deployment, create `functions/.env` with a stable secret:
+Required environment variables for live product search:
 
 ```bash
+NISA_MEMORY_STORE=true
 NISA_JWT_SECRET=replace-with-at-least-32-random-characters
 SERPAPI_KEY=your-serpapi-key
+NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
 
-The comparison API does not generate product prices. It calls SerpAPI Google Shopping with `engine=google_shopping`, maps `shopping_results`, and displays the returned title, price, source, and seller link. If SerpAPI does not return a price, the UI shows `View on site`.
+Local API URL:
 
-Firebase endpoints are exposed through Hosting rewrites:
+```text
+http://127.0.0.1:8080/api/v1
+```
+
+## API Endpoints
+
+Current public POC endpoints:
+
+```http
+GET  /api/v1/health
+GET  /api/v1/sales
+POST /api/v1/compare
+```
+
+Auth endpoints still exist in the backend code for future use, but the current UI does not call them:
 
 ```http
 POST /api/v1/auth/register
 POST /api/v1/auth/login
 GET  /api/v1/auth/me
 POST /api/v1/auth/logout
-GET  /api/v1/sales
-POST /api/v1/compare
 ```
 
-The older Java backend can still be run from `backend/` for local reference work, but it is no longer required for the Firebase POC.
+## Deploy Backend To Render
 
-## Docker
+Create or update a Render Web Service from this GitHub repository.
 
-```bash
-docker compose up
-```
-
-## Run Complete POC On Windows
-
-```powershell
-.\start-poc.ps1
-```
-
-This starts the Spring Boot backend and the static frontend server.
-
-## Public Deployment: Firebase Hosting + Render API
-
-Use this option when Firebase Hosting should stay on Spark/free tier and the private SerpAPI key should live in a backend service.
-
-Deploy the API as a Render Web Service from this GitHub repo:
+Use these settings:
 
 ```text
 Root directory: functions
 Build command: npm install
 Start command: npm start
+Branch: develop
+Auto-Deploy: enabled
 ```
 
-Set these Render environment variables:
+Set Render environment variables:
 
 ```bash
 NISA_MEMORY_STORE=true
 NISA_JWT_SECRET=replace-with-at-least-32-random-characters
 SERPAPI_KEY=your-serpapi-key
-NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,http://127.0.0.1:5173
+NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
 
-Then create `frontend/.env.production` with the Render API URL:
+If Render does not deploy automatically after a git push, confirm that the service is connected to the same GitHub repo and watching the `develop` branch.
+
+## Deploy Frontend To Firebase Hosting
+
+Make sure `frontend/.env.production` points to the Render API:
 
 ```bash
-VITE_API_URL=https://your-render-backend.onrender.com/api/v1
+VITE_API_URL=https://nisa-compare-ai-ecommerce.onrender.com/api/v1
 ```
 
-Build and deploy only Firebase Hosting:
-
-```bash
-cd frontend
-npm install
-npm run build
-cd ..
-firebase deploy --only hosting --project nisa-ecommerce
-```
-
-## Public Deployment: Firebase Hosting + Functions
-
-Create `frontend/.env.production`:
-
-```bash
-VITE_API_URL=/api/v1
-```
-
-Then build and deploy:
+Build and deploy:
 
 ```bash
 cd frontend
 npm install
 npm run build
 cd ..
-firebase deploy --only functions,hosting --project nisa-ecommerce
+npx firebase-tools deploy --only hosting --project nisa-ecommerce --non-interactive
 ```
 
-`firebase.json` serves `frontend/dist`, supports SPA refresh routes, and rewrites `/api/**` to the `api` Firebase Function in `asia-south1`.
+Firebase Hosting serves `frontend/dist`. The project currently uses Render for the API because Firebase Functions deployment requires the Firebase project to be upgraded to the Blaze pay-as-you-go plan.
 
-Firebase Functions requires the Firebase project to be upgraded to the Blaze pay-as-you-go plan because Cloud Build and Cloud Functions APIs are used during deployment.
+## Push Changes To Develop
 
-### Production Security Notes
+After making changes:
 
-- `NISA_JWT_SECRET` must be stable and secret. If it changes, existing sessions become invalid.
-- Registered users and sessions are stored in Firestore by the Node Functions backend.
-- Enable Firestore in the Firebase project before opening auth to public users.
-- Do not commit real API keys, JWT secrets, Amazon keys, Flipkart keys, or Firebase service credentials.
+```bash
+git status
+git add .
+git commit -m "Your commit message"
+git push origin develop
+```
+
+Render should deploy automatically from `develop` when auto-deploy is enabled.
+
+## Docker
+
+Run the containerized local stack:
+
+```bash
+docker compose up
+```
+
+## Security Notes
+
+- Do not commit real API keys, JWT secrets, Firebase service credentials, or provider credentials.
+- Keep `SERPAPI_KEY` only in Render/Firebase environment variables.
+- Keep `NISA_JWT_SECRET` stable if auth is re-enabled later.
+- Add every public frontend origin to `NISA_ALLOWED_ORIGINS` so browser search calls are not blocked by CORS.
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Database Design](docs/database-design.md)
 - [Sequence Diagram](docs/sequence.md)
-
-## Original Requirement Coverage
-
-The README request called for a premium AI shopping assistant with LLM orchestration, vector database usage, provider-based product search, recommendation scoring, comparison UI, dashboard, authentication, DevOps, and production engineering practices.
-
-This POC implements the runnable product experience and the backend architecture seams needed for production adapters. External live shopping providers, real LLM keys, vector database persistence, authentication providers, Kafka, Redis, and enterprise observability are represented as extension points rather than fully wired services.
