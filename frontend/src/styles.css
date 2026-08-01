@@ -246,7 +246,7 @@ button, input { font: inherit; }
 .sale-hero {
   min-height: 430px;
   display: grid;
-  grid-template-columns: minmax(620px, 900px) minmax(480px, 560px);
+  grid-template-columns: minmax(600px, 760px) minmax(450px, 540px);
   justify-content: center;
   align-items: center;
   gap: 0;
@@ -274,7 +274,7 @@ button, input { font: inherit; }
 
 .sale-hero h1 {
   margin: 0;
-  max-width: 960px;
+  max-width: 760px;
   font-size: clamp(3rem, 6vw, 5.6rem);
   line-height: 0.95;
   letter-spacing: 0;
@@ -338,13 +338,13 @@ button, input { font: inherit; }
   display: grid;
   place-items: center;
   justify-self: start;
-  margin-left: -220px;
+  margin-left: 0;
   transform: translateY(-34px);
   isolation: isolate;
 }
 
 .scene {
-  width: min(610px, 100%);
+  width: min(540px, 100%);
   aspect-ratio: 1 / 1;
   cursor: grab;
   touch-action: none;
