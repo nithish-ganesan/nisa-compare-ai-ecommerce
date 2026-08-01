@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import axios from "axios";
-import { ArrowRight, LockKeyhole, Mail, UserPlus } from "lucide-react";
+import { ArrowRight, BadgeIndianRupee, ChartNoAxesCombined, LockKeyhole, Mail, ShoppingBag, UserPlus } from "lucide-react";
 import { loginAccount, registerAccount, type AuthUser } from "../services/commerceApi";
 
 type AuthPageProps = {
@@ -41,6 +41,21 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
   return (
     <main className="auth-page">
+      <section className="auth-welcome" aria-labelledby="welcome-title">
+        <div className="welcome-copy">
+          <p>NiSa Commerce Intelligence</p>
+          <h2 id="welcome-title">Every shopping choice, in view.</h2>
+          <span>Compare live prices, seller offers, delivery signals, and value with confidence.</span>
+        </div>
+        <div className="commerce-visual" aria-hidden="true">
+          <div className="visual-price-tag"><BadgeIndianRupee size={25} /></div>
+          <div className="visual-package"><ShoppingBag size={54} /></div>
+          <div className="visual-chart"><ChartNoAxesCombined size={22} /><i /><i /><i /></div>
+          <div className="visual-orbit-line one" />
+          <div className="visual-orbit-line two" />
+          <div className="visual-value-chip">Best value</div>
+        </div>
+      </section>
       <section className="auth-panel" aria-labelledby="auth-title">
         <div className="auth-brand"><strong>NiSa</strong><span>compare.in</span></div>
         <p className="auth-eyebrow">Enterprise commerce intelligence</p>

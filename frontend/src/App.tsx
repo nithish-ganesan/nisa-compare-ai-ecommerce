@@ -119,7 +119,7 @@ export function App() {
     setQuery("");
   }
 
-  if (authLoading) return <main className="auth-page"><div className="auth-loading">Loading your secure workspace...</div></main>;
+  if (authLoading) return <main className="auth-page auth-loading-page"><div className="auth-loading">Loading your secure workspace...</div></main>;
   if (!user) return <AuthPage onAuthenticated={handleAuthenticated} />;
 
   return (
