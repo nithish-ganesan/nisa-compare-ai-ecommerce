@@ -3,15 +3,18 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import {
   Bot,
+  BadgePercent,
+  Boxes,
   CalendarDays,
   ExternalLink,
   LineChart,
   MapPin,
   SearchCheck,
+  ShieldCheck,
   ShoppingBag,
+  Sparkles,
   Info
 } from "lucide-react";
-import { AiScene } from "./components/AiScene";
 import { ChatPanel } from "./components/ChatPanel";
 import { ComparisonTable } from "./components/ComparisonTable";
 import { compareProducts, fetchSales } from "./services/commerceApi";
@@ -138,7 +141,14 @@ export function App() {
             </div>
           </motion.div>
           <motion.div className="hero-visual" initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}>
-            <AiScene />
+            <div className="visual-orbit visual-orbit-one"><Boxes size={38} /></div>
+            <div className="visual-orbit visual-orbit-two"><ShieldCheck size={34} /></div>
+            <div className="visual-core">
+              <Sparkles size={34} />
+              <strong>AI Commerce Engine</strong>
+              <span>Sale discovery + product comparison + store recommendation</span>
+            </div>
+            <div className="sale-badge"><BadgePercent size={26} /> Best price intelligence</div>
           </motion.div>
         </section>
 

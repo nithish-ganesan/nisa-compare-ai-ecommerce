@@ -10,18 +10,15 @@
     "start": "node scripts/static-server.mjs"
   },
   "dependencies": {
-    "@react-three/fiber": "^9.3.0",
     "axios": "^1.11.0",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.468.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "three": "^0.179.1"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "@types/three": "^0.185.1",
     "typescript": "^5.8.3",
     "vite": "^7.0.6"
   }
