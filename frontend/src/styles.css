@@ -195,6 +195,19 @@ button, input { font: inherit; }
 
 .header-action:hover { outline: 1px solid rgba(255, 255, 255, 0.5); }
 
+.account-summary {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #e2e8f0;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.account-summary svg { color: #5eead4; }
+.account-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -205,6 +218,22 @@ button, input { font: inherit; }
   background: rgba(2, 6, 23, 0.72);
   backdrop-filter: blur(14px);
 }
+
+.welcome-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 30px;
+  text-align: center;
+  color: #f8fafc;
+  background: #07111d;
+  border: 1px solid rgba(94, 234, 212, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 28px 70px rgba(2, 6, 23, 0.58);
+}
+
+.welcome-dialog-mark { width: 48px; height: 48px; display: grid; place-items: center; margin: 0 auto 16px; color: #061016; background: #5eead4; border-radius: 6px; }
+.welcome-dialog strong { font-size: 1.36rem; }
+.welcome-dialog p { margin: 12px 0 24px; color: #cbd5e1; line-height: 1.55; }
+.welcome-dialog button { min-height: 42px; border: 0; border-radius: 5px; padding: 0 16px; color: #061016; background: #5eead4; cursor: pointer; font-weight: 900; }
 
 .support-dialog {
   width: min(460px, 100%);

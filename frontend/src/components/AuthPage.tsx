@@ -4,7 +4,7 @@ import { ArrowRight, BadgeIndianRupee, ChartNoAxesCombined, LockKeyhole, Mail, S
 import { loginAccount, registerAccount, type AuthUser } from "../services/commerceApi";
 
 type AuthPageProps = {
-  onAuthenticated: (user: AuthUser, token: string) => void;
+  onAuthenticated: (user: AuthUser, token: string, isNewUser: boolean) => void;
 };
 
 export function AuthPage({ onAuthenticated }: AuthPageProps) {
@@ -28,7 +28,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
       const result = isRegistering
         ? await registerAccount(email, password)
         : await loginAccount(email, password);
-      onAuthenticated(result.user, result.token);
+      onAuthenticated(result.user, result.token, isRegistering);
     } catch (exception) {
       const message = axios.isAxiosError(exception) && typeof exception.response?.data?.message === "string"
         ? exception.response.data.message

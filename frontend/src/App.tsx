@@ -6,6 +6,7 @@ import {
   BadgePercent,
   Boxes,
   CalendarDays,
+  CircleUserRound,
   ExternalLink,
   LineChart,
   MapPin,
@@ -25,6 +26,7 @@ import type { ComparisonResponse, SaleEvent } from "./types/commerce";
 export function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [welcomeMessage, setWelcomeMessage] = useState<{ title: string; message: string } | null>(null);
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("India");
   const [showUnsupportedLocation, setShowUnsupportedLocation] = useState(false);
@@ -107,9 +109,13 @@ export function App() {
     setShowUnsupportedLocation(true);
   }
 
-  function handleAuthenticated(nextUser: AuthUser, token: string) {
+  function handleAuthenticated(nextUser: AuthUser, token: string, isNewUser: boolean) {
     storeSession(token);
     setUser(nextUser);
+    const username = nextUser.email.split("@")[0];
+    setWelcomeMessage(isNewUser
+      ? { title: `Welcome to NiSa, ${username}!`, message: "Your account is ready. Start comparing live prices, seller offers, and smarter shopping options." }
+      : { title: `Welcome back, ${username}!`, message: "Your commerce workspace is ready for your next comparison." });
   }
 
   function handleLogout() {
@@ -142,6 +148,10 @@ export function App() {
         <div className="top-search">
           <ChatPanel query={query} loading={loading} response={response} error={error} onQueryChange={updateQuery} onSearch={runSearch} />
         </div>
+        <div className="account-summary" title={user.email}>
+          <CircleUserRound size={19} />
+          <span>{user.email.split("@")[0]}</span>
+        </div>
         <button type="button" className="header-action" onClick={handleLogout} title="Log out">
           <LogOut size={17} /> <span>Log out</span>
         </button>
@@ -154,6 +164,17 @@ export function App() {
             <p>NiSa currently supports India and Dubai only. Please contact admin / IT support for access in your country.</p>
             <a href="mailto:nithishganesan2001@gmail.com">nithishganesan2001@gmail.com</a>
             <button type="button" onClick={() => setShowUnsupportedLocation(false)}>Close</button>
+          </section>
+        </div>
+      )}
+
+      {welcomeMessage && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setWelcomeMessage(null)}>
+          <section className="welcome-dialog" role="dialog" aria-modal="true" aria-labelledby="welcome-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="welcome-dialog-mark"><ShoppingBag size={24} /></div>
+            <strong id="welcome-dialog-title">{welcomeMessage.title}</strong>
+            <p>{welcomeMessage.message}</p>
+            <button type="button" onClick={() => setWelcomeMessage(null)}>Start exploring</button>
           </section>
         </div>
       )}
