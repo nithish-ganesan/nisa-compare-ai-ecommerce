@@ -44,7 +44,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
       <section className="auth-welcome" aria-labelledby="welcome-title">
         <div className="welcome-copy">
           <p>NiSa Commerce Intelligence</p>
-          <h2 id="welcome-title">Every shopping choice, in view.</h2>
+          <h2 id="welcome-title">Compare. Decide. Save.</h2>
           <span>Compare live prices, seller offers, delivery signals, and value with confidence.</span>
         </div>
         <div className="commerce-visual" aria-hidden="true">
