@@ -41,7 +41,12 @@ async function connectDatabase() {
   if (!databaseConnection) {
     databaseConnection = mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 8000 });
   }
-  await databaseConnection;
+  try {
+    await databaseConnection;
+  } catch (error) {
+    databaseConnection = undefined;
+    throw error;
+  }
 }
 
 function createToken(user) {
