@@ -85,10 +85,10 @@ button, input { font: inherit; }
 .auth-loading { color: #e2e8f0; font-weight: 700; }
 .auth-loading-page { display: grid; place-items: center; }
 
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
   .auth-page { grid-template-columns: 1fr; justify-items: center; gap: 30px; padding: 36px 22px; }
   .auth-welcome { width: min(100%, 540px); }
-  .welcome-copy h2 { max-width: none; font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.03; }
+  .welcome-copy h2 { max-width: none; font-size: clamp(2.2rem, 5vw, 3.2rem); line-height: 1.03; }
   .welcome-copy span { margin-top: 14px; }
   .commerce-visual { width: min(440px, 100%); height: 250px; margin: 20px 0 0; transform: scale(0.86); transform-origin: left top; margin-bottom: -34px; }
   .auth-panel { max-width: 460px; }
