@@ -246,10 +246,11 @@ button, input { font: inherit; }
 .sale-hero {
   min-height: 430px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 390px;
+  grid-template-columns: minmax(560px, 920px) minmax(320px, 430px);
+  justify-content: center;
   align-items: center;
-  gap: 34px;
-  padding: 38px clamp(24px, 6vw, 110px) 98px;
+  gap: clamp(10px, 2vw, 28px);
+  padding: 38px clamp(24px, 5vw, 88px) 76px;
   color: #fff;
   background:
     linear-gradient(90deg, rgba(20, 184, 166, 0.12), transparent 18%, transparent 82%, rgba(245, 211, 111, 0.1)),
@@ -336,6 +337,7 @@ button, input { font: inherit; }
   min-height: 330px;
   display: grid;
   place-items: center;
+  justify-self: start;
   isolation: isolate;
 }
 
@@ -920,12 +922,16 @@ button, input { font: inherit; }
   .sale-hero {
     grid-template-columns: 1fr;
     min-height: auto;
-    padding: 28px 22px 78px;
+    gap: 12px;
+    padding: 28px 22px 64px;
   }
   .sale-hero h1 { max-width: 760px; }
   .hero-feature-row { grid-template-columns: 1fr; }
-  .hero-visual { min-height: 300px; }
-  .scene { width: min(380px, 82vw); }
+  .hero-visual {
+    min-height: 270px;
+    justify-self: center;
+  }
+  .scene { width: min(350px, 78vw); }
   .sale-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .commerce-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -949,8 +955,8 @@ button, input { font: inherit; }
     min-height: 42px;
   }
   .sale-hero {
-    padding: 24px 14px 76px;
-    gap: 18px;
+    padding: 22px 14px 58px;
+    gap: 8px;
   }
   .sale-hero h1 { font-size: 2.55rem; line-height: 1; }
   .sale-hero span {
@@ -969,10 +975,10 @@ button, input { font: inherit; }
     grid-column: 2;
   }
   .hero-visual {
-    min-height: 260px;
+    min-height: 218px;
     overflow: hidden;
   }
-  .scene { width: min(300px, 84vw); }
+  .scene { width: min(255px, 76vw); }
   .visual-core {
     width: min(280px, 90vw);
     min-height: 205px;
@@ -1073,6 +1079,7 @@ button, input { font: inherit; }
   .commerce-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sale-hero {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
   .hero-feature-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
