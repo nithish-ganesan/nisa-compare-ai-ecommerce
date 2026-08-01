@@ -88,7 +88,8 @@ button, input { font: inherit; }
 @media (max-width: 900px) {
   .auth-page { grid-template-columns: 1fr; justify-items: center; gap: 30px; padding: 36px 22px; }
   .auth-welcome { width: min(100%, 540px); }
-  .welcome-copy h2 { font-size: clamp(2.2rem, 9vw, 3.5rem); }
+  .welcome-copy h2 { max-width: none; font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.03; }
+  .welcome-copy span { margin-top: 14px; }
   .commerce-visual { width: min(440px, 100%); height: 250px; margin: 20px 0 0; transform: scale(0.86); transform-origin: left top; margin-bottom: -34px; }
   .auth-panel { max-width: 460px; }
 }
