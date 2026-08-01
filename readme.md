@@ -18,6 +18,7 @@ https://nisa.ecommerce.nithishg.com
 - Lucide React for UI icons.
 - Node.js and Express for the API in `functions/`.
 - Render Web Service for the currently used production API.
+- Dockerfile for the Render Docker web service.
 - SerpAPI Google Shopping adapter for live product comparison data.
 - Firebase Hosting for public frontend deployment.
 - Firebase CLI for SPA hosting.
@@ -113,7 +114,9 @@ POST /api/v1/compare
 
 Create or update a Render Web Service from this GitHub repository.
 
-Use these settings:
+For the current Render Docker service, keep the root `Dockerfile` in the repo. Render builds that Dockerfile and starts the Express API from `functions/`.
+
+Use these settings if you create a non-Docker Render Node service:
 
 ```text
 Root directory: functions
