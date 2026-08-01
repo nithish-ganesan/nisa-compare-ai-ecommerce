@@ -9,6 +9,7 @@ import {
   ExternalLink,
   LineChart,
   MapPin,
+  LogOut,
   SearchCheck,
   ShieldCheck,
   ShoppingBag,
@@ -16,11 +17,14 @@ import {
   Info
 } from "lucide-react";
 import { ChatPanel } from "./components/ChatPanel";
+import { AuthPage } from "./components/AuthPage";
 import { ComparisonTable } from "./components/ComparisonTable";
-import { compareProducts, fetchSales } from "./services/commerceApi";
+import { clearSession, compareProducts, fetchCurrentUser, fetchSales, hasSession, storeSession, type AuthUser } from "./services/commerceApi";
 import type { ComparisonResponse, SaleEvent } from "./types/commerce";
 
 export function App() {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("India");
   const [showUnsupportedLocation, setShowUnsupportedLocation] = useState(false);
@@ -45,11 +49,23 @@ export function App() {
   ];
 
   useEffect(() => {
+    if (!hasSession()) {
+      setAuthLoading(false);
+      return;
+    }
+    fetchCurrentUser()
+      .then(setUser)
+      .catch(clearSession)
+      .finally(() => setAuthLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
     fetchSales()
       .then(setSales)
       .catch(() => setSales([]))
       .finally(() => setSalesLoading(false));
-  }, []);
+  }, [user]);
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -91,6 +107,21 @@ export function App() {
     setShowUnsupportedLocation(true);
   }
 
+  function handleAuthenticated(nextUser: AuthUser, token: string) {
+    storeSession(token);
+    setUser(nextUser);
+  }
+
+  function handleLogout() {
+    clearSession();
+    setUser(null);
+    setResponse(null);
+    setQuery("");
+  }
+
+  if (authLoading) return <main className="auth-page"><div className="auth-loading">Loading your secure workspace...</div></main>;
+  if (!user) return <AuthPage onAuthenticated={handleAuthenticated} />;
+
   return (
     <div className="portal">
       <>
@@ -111,6 +142,9 @@ export function App() {
         <div className="top-search">
           <ChatPanel query={query} loading={loading} response={response} error={error} onQueryChange={updateQuery} onSearch={runSearch} />
         </div>
+        <button type="button" className="header-action" onClick={handleLogout} title="Log out">
+          <LogOut size={17} /> <span>Log out</span>
+        </button>
       </header>
 
       {showUnsupportedLocation && (

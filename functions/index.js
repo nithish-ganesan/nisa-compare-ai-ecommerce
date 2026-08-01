@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const app = express();
 const defaultAllowedOrigins = [
@@ -25,13 +28,92 @@ app.use(cors({
   }
 }));
 
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  passwordHash: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+}, { versionKey: false });
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+let databaseConnection;
+
+async function connectDatabase() {
+  if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is not configured on the backend.");
+  if (!databaseConnection) {
+    databaseConnection = mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 8000 });
+  }
+  await databaseConnection;
+}
+
+function createToken(user) {
+  if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not configured on the backend.");
+  return jwt.sign({ sub: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+}
+
+function publicUser(user) {
+  return { id: user.id, email: user.email };
+}
+
+function readCredentials(body) {
+  const email = String(body.email || "").trim().toLowerCase();
+  const password = String(body.password || "");
+  if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Enter a valid email address.");
+  if (password.length < 8) throw new Error("Password must be at least 8 characters.");
+  return { email, password };
+}
+
+async function requireAuthentication(req, res, next) {
+  try {
+    const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+    if (!token) return res.status(401).json({ message: "Please log in to continue." });
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(payload.sub).select("email");
+    if (!user) return res.status(401).json({ message: "Your session has expired. Please log in again." });
+    req.user = user;
+    next();
+  } catch (_error) {
+    res.status(401).json({ message: "Your session has expired. Please log in again." });
+  }
+}
+
 const SERPAPI_ENDPOINT = "https://serpapi.com/search.json";
 
 app.get("/api/v1/health", (_req, res) => {
   res.json({ ok: true, service: "nisa-commerce-api" });
 });
 
-app.get("/api/v1/sales", async (req, res) => {
+app.post("/api/v1/auth/register", async (req, res) => {
+  try {
+    await connectDatabase();
+    const { email, password } = readCredentials(req.body);
+    const existingUser = await User.exists({ email });
+    if (existingUser) return res.status(409).json({ message: "An account already exists for this email. Please log in." });
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await User.create({ email, passwordHash });
+    res.status(201).json({ token: createToken(user), user: publicUser(user) });
+  } catch (error) {
+    res.status(400).json({ message: error.message || "Unable to create your account." });
+  }
+});
+
+app.post("/api/v1/auth/login", async (req, res) => {
+  try {
+    await connectDatabase();
+    const { email, password } = readCredentials(req.body);
+    const user = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      return res.status(401).json({ message: "Email or password is incorrect." });
+    }
+    res.json({ token: createToken(user), user: publicUser(user) });
+  } catch (error) {
+    res.status(400).json({ message: error.message || "Unable to log in." });
+  }
+});
+
+app.get("/api/v1/auth/me", requireAuthentication, (req, res) => {
+  res.json({ user: publicUser(req.user) });
+});
+
+app.get("/api/v1/sales", requireAuthentication, async (req, res) => {
   try {
     const today = new Date();
     const day = today.toISOString().slice(0, 10);
@@ -48,7 +130,7 @@ app.get("/api/v1/sales", async (req, res) => {
   }
 });
 
-app.post("/api/v1/compare", async (req, res) => {
+app.post("/api/v1/compare", requireAuthentication, async (req, res) => {
   try {
     const query = String(req.body.query || "").trim();
     if (!query) return res.status(400).json({ message: "Query is required." });
