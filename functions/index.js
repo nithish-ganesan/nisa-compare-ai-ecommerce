@@ -1,14 +1,5 @@
-const crypto = require("crypto");
 const express = require("express");
 const cors = require("cors");
-const admin = require("firebase-admin");
-const { onRequest } = require("firebase-functions/v2/https");
-
-const USE_MEMORY_STORE = process.env.NISA_MEMORY_STORE === "true";
-
-if (!USE_MEMORY_STORE) {
-  admin.initializeApp();
-}
 
 const app = express();
 const defaultAllowedOrigins = [
@@ -34,78 +25,10 @@ app.use(cors({
   }
 }));
 
-const db = USE_MEMORY_STORE ? null : admin.firestore();
-const memoryStore = {
-  users: new Map(),
-  loginIndex: new Map(),
-  sessions: new Map(),
-  revokedSessions: new Set()
-};
-
-const ISSUER = "nisa-commerce-functions";
-const AUDIENCE = "nisa-compare-portal";
-const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
-const JWT_SECRET = process.env.NISA_JWT_SECRET || "firebase-functions-local-secret-change-before-production";
 const SERPAPI_ENDPOINT = "https://serpapi.com/search.json";
 
 app.get("/api/v1/health", (_req, res) => {
   res.json({ ok: true, service: "nisa-commerce-api" });
-});
-
-app.post("/api/v1/auth/register", async (req, res) => {
-  try {
-    const username = normalize(req.body.username);
-    const email = normalize(req.body.email);
-    const password = String(req.body.password || "");
-    validateRegistration(username, email, password);
-    if (await findUser(username) || await findUser(email)) {
-      throw new Error("Account already exists. Please login with your username or email.");
-    }
-    const user = {
-      username,
-      email,
-      logins: [username, email],
-      passwordHash: hashPassword(password),
-      createdAt: Date.now()
-    };
-    await saveUser(user);
-    res.json(await createSession(user));
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-app.post("/api/v1/auth/login", async (req, res) => {
-  try {
-    const login = normalize(req.body.login);
-    const password = String(req.body.password || "");
-    const user = await findUser(login);
-    if (!user || !verifyPassword(password, user.passwordHash)) {
-      throw new Error("Invalid username/email or password.");
-    }
-    res.json(await createSession(user));
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-app.get("/api/v1/auth/me", async (req, res) => {
-  try {
-    const user = await requireUser(req);
-    res.json({ username: user.username, email: user.email });
-  } catch (error) {
-    res.status(401).json({ message: error.message });
-  }
-});
-
-app.post("/api/v1/auth/logout", async (req, res) => {
-  try {
-    const user = await requireUser(req);
-    await revokeSession(user.jwtId);
-    res.status(204).send();
-  } catch (_error) {
-    res.status(204).send();
-  }
 });
 
 app.get("/api/v1/sales", async (req, res) => {
@@ -143,154 +66,12 @@ app.post("/api/v1/compare", async (req, res) => {
       offers
     });
   } catch (error) {
-    const status = /Authentication|token|Session/i.test(error.message) ? 401 : 400;
-    res.status(status).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 });
 
-async function saveUser(user) {
-  if (USE_MEMORY_STORE) {
-    memoryStore.users.set(user.username, user);
-    user.logins.forEach((login) => memoryStore.loginIndex.set(login, user.username));
-    return;
-  }
-  await db.collection("users").doc(user.username).set({
-    ...user,
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-}
-
-async function findUser(login) {
-  const key = normalize(login);
-  if (USE_MEMORY_STORE) {
-    const username = memoryStore.loginIndex.get(key) || key;
-    return memoryStore.users.get(username) || null;
-  }
-  const snapshot = await db.collection("users").where("logins", "array-contains", key).limit(1).get();
-  return snapshot.empty ? null : snapshot.docs[0].data();
-}
-
-async function createSession(user) {
-  const session = signToken(user);
-  const sessionData = {
-    username: user.username,
-    email: user.email,
-    createdAt: Date.now(),
-    expiresAt: session.expiresAt
-  };
-  if (USE_MEMORY_STORE) {
-    memoryStore.sessions.set(session.jwtId, sessionData);
-  } else {
-    await db.collection("sessions").doc(session.jwtId).set({
-      ...sessionData,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-  }
-  return { token: session.token, username: user.username, email: user.email, expiresAt: session.expiresAt };
-}
-
-async function requireUser(req) {
-  const header = req.get("Authorization") || "";
-  if (!header.startsWith("Bearer ")) throw new Error("Authentication required.");
-  const claims = verifyToken(header.slice("Bearer ".length).trim());
-  if (USE_MEMORY_STORE) {
-    if (memoryStore.revokedSessions.has(claims.jti)) throw new Error("Authentication required.");
-    if (!memoryStore.sessions.has(claims.jti)) {
-      memoryStore.sessions.set(claims.jti, {
-        username: claims.sub,
-        email: claims.email,
-        createdAt: Date.now(),
-        expiresAt: claims.exp
-      });
-    }
-  } else {
-    const session = await db.collection("sessions").doc(claims.jti).get();
-    if (!session.exists) throw new Error("Authentication required.");
-  }
-  return { username: claims.sub, email: claims.email, jwtId: claims.jti };
-}
-
-async function revokeSession(jwtId) {
-  if (USE_MEMORY_STORE) {
-    memoryStore.sessions.delete(jwtId);
-    memoryStore.revokedSessions.add(jwtId);
-    return;
-  }
-  await db.collection("sessions").doc(jwtId).delete();
-}
-
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
-}
-
-function base64Url(input) {
-  return Buffer.from(input).toString("base64url");
-}
-
-function hmac(input) {
-  return crypto.createHmac("sha256", JWT_SECRET).update(input).digest("base64url");
-}
-
-function signToken(user) {
-  const now = Math.floor(Date.now() / 1000);
-  const expiresAt = now + TOKEN_TTL_SECONDS;
-  const jwtId = crypto.randomUUID();
-  const header = base64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = base64Url(JSON.stringify({
-    iss: ISSUER,
-    aud: AUDIENCE,
-    sub: user.username,
-    email: user.email,
-    jti: jwtId,
-    iat: now,
-    nbf: now,
-    exp: expiresAt
-  }));
-  return { token: `${header}.${payload}.${hmac(`${header}.${payload}`)}`, jwtId, expiresAt };
-}
-
-function verifyToken(token) {
-  const parts = String(token || "").split(".");
-  if (parts.length !== 3) throw new Error("Invalid token.");
-  const [header, payload, signature] = parts;
-  const expected = hmac(`${header}.${payload}`);
-  if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-    throw new Error("Invalid token signature.");
-  }
-  const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-  const now = Math.floor(Date.now() / 1000);
-  if (claims.iss !== ISSUER) throw new Error("Invalid token issuer.");
-  if (claims.aud !== AUDIENCE) throw new Error("Invalid token audience.");
-  if (claims.nbf && claims.nbf > now) throw new Error("Token is not active yet.");
-  if (claims.exp <= now) throw new Error("Session expired. Please login again.");
-  return claims;
-}
-
-function hashPassword(password) {
-  const salt = crypto.randomBytes(16);
-  const hash = crypto.pbkdf2Sync(password, salt, 210000, 32, "sha256");
-  return `${salt.toString("base64")}:${hash.toString("base64")}`;
-}
-
-function verifyPassword(password, stored) {
-  const [saltText, hashText] = String(stored || "").split(":");
-  if (!saltText || !hashText) return false;
-  const salt = Buffer.from(saltText, "base64");
-  const expected = Buffer.from(hashText, "base64");
-  const actual = crypto.pbkdf2Sync(password, salt, 210000, 32, "sha256");
-  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
-}
-
-function validateRegistration(username, email, password) {
-  if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
-    throw new Error("Username must be 3-32 characters and use letters, numbers, dot, underscore, or hyphen.");
-  }
-  if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email)) {
-    throw new Error("Enter a valid email address.");
-  }
-  if (!password || password.length < 10 || !/[a-z]/i.test(password) || !/\d/.test(password)) {
-    throw new Error("Password must be at least 10 characters and include letters and numbers.");
-  }
 }
 
 async function searchSerpShopping(intent) {
@@ -509,7 +290,6 @@ function compact(values) {
 }
 
 exports.app = app;
-exports.api = onRequest({ region: "asia-south1" }, app);
 
 if (require.main === module) {
   const port = Number(process.env.PORT || 8080);

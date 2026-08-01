@@ -1,2 +1,0 @@
-NISA_JWT_SECRET: "replace-with-at-least-32-random-characters"
-NISA_ALLOWED_ORIGINS: "https://your-firebase-project-id.web.app,https://your-custom-domain.com"

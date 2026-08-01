@@ -45,10 +45,3 @@ export type SaleEvent = {
   endsOn: string;
   saleUrl: string;
 };
-
-export type AuthResult = {
-  token: string;
-  username: string;
-  email: string;
-  expiresAt: number;
-};

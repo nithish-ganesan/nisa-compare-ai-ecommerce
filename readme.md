@@ -16,14 +16,11 @@ https://nisa.ecommerce.nithishg.com
 - Framer Motion for UI transitions.
 - Three.js / React Three Fiber for the animated commerce assistant scene.
 - Lucide React for UI icons.
-- Node.js, Express, and Firebase Functions style structure for the API in `functions/`.
+- Node.js and Express for the API in `functions/`.
 - Render Web Service for the currently used production API.
 - SerpAPI Google Shopping adapter for live product comparison data.
 - Firebase Hosting for public frontend deployment.
-- Firebase CLI / Firebase Hosting rewrites for SPA hosting.
-- Legacy Spring Boot 3 / Java 21 backend skeleton in `backend/` for local/reference architecture.
-- Docker and Docker Compose files for local container-based runs.
-- Firestore-ready auth/session code remains in the backend, but the current POC UI does not require login.
+- Firebase CLI for SPA hosting.
 
 ## Current POC Flow
 
@@ -40,10 +37,7 @@ VITE_API_URL=https://nisa-compare-ai-ecommerce.onrender.com/api/v1
 
 ```text
 frontend/   React + Vite application
-functions/  Node.js Express API used by Render/Firebase Functions style deployment
-backend/    Legacy Spring Boot reference backend
-docs/       Architecture and design notes
-data/       Sample product data
+functions/  Node.js Express API used by Render
 ```
 
 ## Run The Frontend Locally
@@ -95,8 +89,6 @@ npm start
 Required environment variables for live product search:
 
 ```bash
-NISA_MEMORY_STORE=true
-NISA_JWT_SECRET=replace-with-at-least-32-random-characters
 SERPAPI_KEY=your-serpapi-key
 NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
@@ -117,15 +109,6 @@ GET  /api/v1/sales
 POST /api/v1/compare
 ```
 
-Auth endpoints still exist in the backend code for future use, but the current UI does not call them:
-
-```http
-POST /api/v1/auth/register
-POST /api/v1/auth/login
-GET  /api/v1/auth/me
-POST /api/v1/auth/logout
-```
-
 ## Deploy Backend To Render
 
 Create or update a Render Web Service from this GitHub repository.
@@ -143,8 +126,6 @@ Auto-Deploy: enabled
 Set Render environment variables:
 
 ```bash
-NISA_MEMORY_STORE=true
-NISA_JWT_SECRET=replace-with-at-least-32-random-characters
 SERPAPI_KEY=your-serpapi-key
 NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
@@ -169,7 +150,7 @@ cd ..
 npx firebase-tools deploy --only hosting --project nisa-ecommerce --non-interactive
 ```
 
-Firebase Hosting serves `frontend/dist`. The project currently uses Render for the API because Firebase Functions deployment requires the Firebase project to be upgraded to the Blaze pay-as-you-go plan.
+Firebase Hosting serves `frontend/dist`. The project currently uses Render for the API, so Firebase deploys only the frontend.
 
 ## Push Changes To Develop
 
@@ -184,23 +165,8 @@ git push origin develop
 
 Render should deploy automatically from `develop` when auto-deploy is enabled.
 
-## Docker
-
-Run the containerized local stack:
-
-```bash
-docker compose up
-```
-
 ## Security Notes
 
-- Do not commit real API keys, JWT secrets, Firebase service credentials, or provider credentials.
+- Do not commit real API keys, Firebase service credentials, or provider credentials.
 - Keep `SERPAPI_KEY` only in Render/Firebase environment variables.
-- Keep `NISA_JWT_SECRET` stable if auth is re-enabled later.
 - Add every public frontend origin to `NISA_ALLOWED_ORIGINS` so browser search calls are not blocked by CORS.
-
-## Documentation
-
-- [Architecture](docs/architecture.md)
-- [Database Design](docs/database-design.md)
-- [Sequence Diagram](docs/sequence.md)
