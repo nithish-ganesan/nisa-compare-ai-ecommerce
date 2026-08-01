@@ -14,9 +14,10 @@ https://nisa.ecommerce.nithishg.com
 - React 19, Vite, and TypeScript for the frontend.
 - Axios for API communication.
 - Framer Motion for UI transitions.
-- Three.js / React Three Fiber for the animated commerce assistant scene.
 - Lucide React for UI icons.
 - Node.js and Express for the API in `functions/`.
+- MongoDB Atlas with Mongoose for persistent customer accounts.
+- bcrypt password hashing and JSON Web Tokens (JWT) for authentication sessions.
 - Render Web Service for the currently used production API.
 - Dockerfile for the Render Docker web service.
 - SerpAPI Google Shopping adapter for live product comparison data.
@@ -25,7 +26,9 @@ https://nisa.ecommerce.nithishg.com
 
 ## Current POC Flow
 
-- The frontend opens directly without login or registration.
+- New customers register once with an email address and password.
+- Passwords are salted and hashed before storage; plaintext passwords are never saved.
+- Returning customers log in with the same credentials. Logout clears their local session.
 - Daily sales are loaded from the backend `/sales` endpoint.
 - Product search uses the backend `/compare` endpoint.
 - Production frontend uses this Render API URL from `frontend/.env.production`:
@@ -87,10 +90,12 @@ npm run lint
 npm start
 ```
 
-Required environment variables for live product search:
+Required environment variables:
 
 ```bash
 SERPAPI_KEY=your-serpapi-key
+MONGODB_URI=mongodb+srv://database-user:database-password@cluster.mongodb.net/nisa_ecommerce?retryWrites=true&w=majority
+JWT_SECRET=a-long-random-secret-with-at-least-32-characters
 NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
 
@@ -102,10 +107,13 @@ http://127.0.0.1:8080/api/v1
 
 ## API Endpoints
 
-Current public POC endpoints:
+Endpoints:
 
 ```http
 GET  /api/v1/health
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+GET  /api/v1/auth/me
 GET  /api/v1/sales
 POST /api/v1/compare
 ```
@@ -130,6 +138,8 @@ Set Render environment variables:
 
 ```bash
 SERPAPI_KEY=your-serpapi-key
+MONGODB_URI=your-atlas-connection-string
+JWT_SECRET=a-long-random-secret-with-at-least-32-characters
 NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
 
@@ -171,5 +181,6 @@ Render should deploy automatically from `develop` when auto-deploy is enabled.
 ## Security Notes
 
 - Do not commit real API keys, Firebase service credentials, or provider credentials.
-- Keep `SERPAPI_KEY` only in Render/Firebase environment variables.
+- Keep `SERPAPI_KEY`, `MONGODB_URI`, and `JWT_SECRET` only in Render environment variables.
+- Use a MongoDB database user with `readWrite` access to the `nisa_ecommerce` database; do not use an Atlas administrator account for the app.
 - Add every public frontend origin to `NISA_ALLOWED_ORIGINS` so browser search calls are not blocked by CORS.
