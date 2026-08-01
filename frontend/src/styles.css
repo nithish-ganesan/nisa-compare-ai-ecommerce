@@ -246,10 +246,10 @@ button, input { font: inherit; }
 .sale-hero {
   min-height: 430px;
   display: grid;
-  grid-template-columns: minmax(560px, 920px) minmax(320px, 430px);
+  grid-template-columns: minmax(540px, 890px) minmax(420px, 520px);
   justify-content: center;
   align-items: center;
-  gap: clamp(10px, 2vw, 28px);
+  gap: 0;
   padding: 38px clamp(24px, 5vw, 88px) 76px;
   color: #fff;
   background:
@@ -338,11 +338,12 @@ button, input { font: inherit; }
   display: grid;
   place-items: center;
   justify-self: start;
+  margin-left: -46px;
   isolation: isolate;
 }
 
 .scene {
-  width: min(430px, 100%);
+  width: min(520px, 100%);
   aspect-ratio: 1 / 1;
   cursor: grab;
   touch-action: none;
@@ -930,6 +931,7 @@ button, input { font: inherit; }
   .hero-visual {
     min-height: 270px;
     justify-self: center;
+    margin-left: 0;
   }
   .scene { width: min(350px, 78vw); }
   .sale-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

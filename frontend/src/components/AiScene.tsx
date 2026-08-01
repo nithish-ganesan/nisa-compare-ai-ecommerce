@@ -150,7 +150,7 @@ function SceneCore({ targetRotation, isDragging }: SceneCoreProps) {
   });
 
   return (
-    <group ref={group} rotation={[0.16, -0.38, 0]}>
+    <group ref={group} rotation={[0.16, -0.38, 0]} scale={1.16}>
       <ShoppingBag />
       <group ref={orbit}>
         <SaleTag />
