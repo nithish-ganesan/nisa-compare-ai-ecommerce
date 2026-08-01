@@ -1,45 +1,135 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import type { MutableRefObject, PointerEvent } from "react";
-import type { Group, Mesh } from "three";
+import type { Group } from "three";
 
 type SceneCoreProps = {
   targetRotation: MutableRefObject<{ x: number; y: number }>;
   isDragging: boolean;
 };
 
-const nodes = [
-  { position: [-1.75, 1.12, 0.22], scale: 0.42, color: "#5eead4" },
-  { position: [1.74, 0.92, -0.12], scale: 0.48, color: "#f5d36f" },
-  { position: [-1.42, -1.1, -0.16], scale: 0.38, color: "#c4b5fd" },
-  { position: [1.22, -1.18, 0.18], scale: 0.36, color: "#86efac" },
-  { position: [0, 1.72, -0.24], scale: 0.28, color: "#bae6fd" },
-  { position: [0.04, -1.76, 0.1], scale: 0.28, color: "#fecdd3" }
-] as const;
+function ShoppingBag() {
+  return (
+    <group>
+      <mesh position={[0, -0.12, 0]} scale={[1.32, 1.5, 0.64]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#7dd3fc" emissive="#0f766e" emissiveIntensity={0.16} metalness={0.28} roughness={0.24} />
+      </mesh>
+      <mesh position={[0, 0.72, 0.02]} rotation={[Math.PI / 2, 0, 0]} scale={[0.9, 0.42, 0.52]}>
+        <torusGeometry args={[0.6, 0.045, 12, 72]} />
+        <meshStandardMaterial color="#f8fafc" emissive="#5eead4" emissiveIntensity={0.28} metalness={0.42} roughness={0.18} />
+      </mesh>
+      <mesh position={[-0.3, 0.2, 0.35]} scale={[0.16, 0.55, 0.035]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#14b8a6" emissive="#14b8a6" emissiveIntensity={0.22} />
+      </mesh>
+      <mesh position={[0.04, 0.02, 0.36]} scale={[0.16, 0.82, 0.035]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#f5d36f" emissive="#f5d36f" emissiveIntensity={0.22} />
+      </mesh>
+      <mesh position={[0.38, -0.16, 0.36]} scale={[0.16, 0.42, 0.035]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#86efac" emissive="#86efac" emissiveIntensity={0.18} />
+      </mesh>
+    </group>
+  );
+}
 
-function PatternNode({ position, scale, color }: typeof nodes[number]) {
-  const mesh = useRef<Mesh>(null);
+function SaleTag() {
+  return (
+    <group position={[-1.75, 1.0, 0.18]} rotation={[0.22, -0.52, -0.18]}>
+      <mesh scale={[0.72, 0.46, 0.08]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#f5d36f" emissive="#f5d36f" emissiveIntensity={0.22} metalness={0.2} roughness={0.22} />
+      </mesh>
+      <mesh position={[-0.3, 0.16, 0.07]}>
+        <sphereGeometry args={[0.055, 16, 16]} />
+        <meshStandardMaterial color="#08111f" />
+      </mesh>
+      <mesh position={[0.08, 0.05, 0.08]} rotation={[0, 0, -0.65]} scale={[0.08, 0.58, 0.035]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#08111f" />
+      </mesh>
+      <mesh position={[-0.15, -0.12, 0.08]}>
+        <sphereGeometry args={[0.08, 20, 20]} />
+        <meshStandardMaterial color="#08111f" />
+      </mesh>
+      <mesh position={[0.28, 0.17, 0.08]}>
+        <sphereGeometry args={[0.08, 20, 20]} />
+        <meshStandardMaterial color="#08111f" />
+      </mesh>
+    </group>
+  );
+}
 
-  useFrame(({ clock }) => {
-    if (!mesh.current) return;
-    const t = clock.getElapsedTime();
-    mesh.current.rotation.x = t * 0.38 + position[1] * 0.4;
-    mesh.current.rotation.y = t * 0.44 + position[0] * 0.3;
-  });
+function ProductParcel() {
+  return (
+    <group position={[1.58, 0.92, -0.08]} rotation={[0.15, 0.58, 0.18]}>
+      <mesh scale={[0.62, 0.58, 0.58]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#c4b5fd" emissive="#7c3aed" emissiveIntensity={0.12} metalness={0.16} roughness={0.28} />
+      </mesh>
+      <mesh position={[0, 0.01, 0.31]} scale={[0.11, 0.6, 0.035]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#f8fafc" emissive="#e0e7ff" emissiveIntensity={0.12} />
+      </mesh>
+      <mesh position={[0, 0.31, 0]} scale={[0.12, 0.04, 0.62]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#f8fafc" emissive="#e0e7ff" emissiveIntensity={0.12} />
+      </mesh>
+    </group>
+  );
+}
+
+function ComparisonBars() {
+  const bars = [
+    { x: -0.28, height: 0.42, color: "#f87171" },
+    { x: 0, height: 0.68, color: "#f5d36f" },
+    { x: 0.28, height: 0.98, color: "#5eead4" }
+  ];
 
   return (
-    <mesh ref={mesh} position={position} scale={scale}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.32} metalness={0.28} roughness={0.2} />
-    </mesh>
+    <group position={[-1.42, -1.14, 0.12]} rotation={[-0.12, -0.2, 0.08]}>
+      <mesh position={[0, -0.35, 0]} scale={[0.82, 0.06, 0.08]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#cbd5e1" emissive="#5eead4" emissiveIntensity={0.08} />
+      </mesh>
+      {bars.map((bar) => (
+        <mesh key={bar.x} position={[bar.x, -0.35 + bar.height / 2, 0]} scale={[0.16, bar.height, 0.14]}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color={bar.color} emissive={bar.color} emissiveIntensity={0.18} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function DeliveryCart() {
+  return (
+    <group position={[1.36, -1.2, 0.08]} rotation={[0.08, -0.46, 0.02]}>
+      <mesh position={[-0.16, 0.03, 0]} scale={[0.72, 0.28, 0.28]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#5eead4" emissive="#14b8a6" emissiveIntensity={0.18} roughness={0.22} />
+      </mesh>
+      <mesh position={[0.38, -0.02, 0]} scale={[0.3, 0.22, 0.28]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#bae6fd" emissive="#38bdf8" emissiveIntensity={0.14} roughness={0.22} />
+      </mesh>
+      <mesh position={[-0.36, -0.22, 0.16]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.09, 0.09, 0.06, 24]} />
+        <meshStandardMaterial color="#08111f" />
+      </mesh>
+      <mesh position={[0.34, -0.22, 0.16]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.09, 0.09, 0.06, 24]} />
+        <meshStandardMaterial color="#08111f" />
+      </mesh>
+    </group>
   );
 }
 
 function SceneCore({ targetRotation, isDragging }: SceneCoreProps) {
   const group = useRef<Group>(null);
-  const core = useRef<Mesh>(null);
-  const ring = useRef<Mesh>(null);
-  const band = useRef<Mesh>(null);
+  const orbit = useRef<Group>(null);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -53,40 +143,29 @@ function SceneCore({ targetRotation, isDragging }: SceneCoreProps) {
       group.current.rotation.y += (targetRotation.current.y - group.current.rotation.y) * 0.08;
     }
 
-    if (core.current) {
-      core.current.position.y = Math.sin(t * 1.4) * 0.07;
-    }
-    if (ring.current) {
-      ring.current.rotation.z = t * 0.32;
-      ring.current.rotation.x = 1.25 + Math.sin(t) * 0.08;
-    }
-    if (band.current) {
-      band.current.rotation.y = t * -0.24;
-      band.current.rotation.x = 0.9 + Math.sin(t * 0.8) * 0.08;
+    if (orbit.current) {
+      orbit.current.rotation.y = t * 0.22;
+      orbit.current.rotation.z = Math.sin(t * 0.6) * 0.04;
     }
   });
 
   return (
     <group ref={group} rotation={[0.16, -0.38, 0]}>
-      <mesh ref={core}>
-        <dodecahedronGeometry args={[1.08, 0]} />
-        <meshStandardMaterial color="#dbeafe" emissive="#2dd4bf" emissiveIntensity={0.26} metalness={0.64} roughness={0.16} />
-      </mesh>
-      <mesh ref={ring}>
-        <torusGeometry args={[1.82, 0.024, 14, 120]} />
-        <meshStandardMaterial color="#2dd4bf" emissive="#2dd4bf" emissiveIntensity={0.9} />
-      </mesh>
-      <mesh ref={band} rotation={[1.1, 0.35, 0]}>
-        <torusGeometry args={[2.28, 0.014, 12, 120]} />
-        <meshStandardMaterial color="#f5d36f" emissive="#f5d36f" emissiveIntensity={0.6} />
-      </mesh>
-      <mesh rotation={[0, 0, 0.78]}>
-        <torusGeometry args={[1.36, 0.012, 12, 96]} />
-        <meshStandardMaterial color="#a7f3d0" emissive="#a7f3d0" emissiveIntensity={0.5} />
-      </mesh>
-      {nodes.map((node) => (
-        <PatternNode key={node.position.join("-")} {...node} />
-      ))}
+      <ShoppingBag />
+      <group ref={orbit}>
+        <SaleTag />
+        <ProductParcel />
+        <ComparisonBars />
+        <DeliveryCart />
+        <mesh rotation={[1.1, 0.16, 0.05]}>
+          <torusGeometry args={[1.86, 0.018, 12, 120]} />
+          <meshStandardMaterial color="#99f6e4" emissive="#2dd4bf" emissiveIntensity={0.72} />
+        </mesh>
+        <mesh rotation={[1.42, -0.28, 0.88]}>
+          <torusGeometry args={[2.12, 0.012, 12, 120]} />
+          <meshStandardMaterial color="#f5d36f" emissive="#f5d36f" emissiveIntensity={0.48} />
+        </mesh>
+      </group>
     </group>
   );
 }
