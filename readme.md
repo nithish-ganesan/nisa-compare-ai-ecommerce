@@ -28,6 +28,7 @@ https://nisa.ecommerce.nithishg.com
 
 - New customers sign in with a verified Google account, which prevents fake Gmail addresses.
 - Returning customers log in with Google. Logout clears their local session.
+- Successful Google logins can be sent to Telegram when Telegram env vars are configured. Alerts do not include user email addresses.
 - Daily sales are loaded from the backend `/sales` endpoint.
 - Product search uses the backend `/compare` endpoint.
 - Production frontend uses this Render API URL from `frontend/.env.production`:
@@ -98,6 +99,8 @@ JWT_SECRET=a-long-random-secret-with-at-least-32-characters
 GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 NISA_GOOGLE_ALLOWED_DOMAINS=gmail.com
 NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa-ecommerce.firebaseapp.com,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_CHAT_ID=your-telegram-chat-id
 ```
 
 Local API URL:
@@ -142,7 +145,30 @@ JWT_SECRET=a-long-random-secret-with-at-least-32-characters
 GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 NISA_GOOGLE_ALLOWED_DOMAINS=gmail.com
 NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa-ecommerce.firebaseapp.com,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_CHAT_ID=your-telegram-chat-id
 ```
+
+## Enable Telegram Login Alerts
+
+Create a Telegram bot with `@BotFather`, copy the bot token, then send one message to your bot from your Telegram account.
+
+Open this URL in a browser after replacing the token:
+
+```text
+https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates
+```
+
+Find your chat `id`, then set these Render environment variables:
+
+```bash
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_CHAT_ID=your-telegram-chat-id
+```
+
+If either value is missing, login still works and Telegram alerts are skipped.
+
+Telegram alerts only include a login event and timestamp. They do not include the signed-in user's email address.
 
 ## Enable Google Sign-In
 
@@ -207,5 +233,5 @@ Render should deploy automatically from `develop` when auto-deploy is enabled.
 ## Security Notes
 
 - Do not commit real API keys, Firebase service credentials, or provider credentials.
-- Keep `SERPAPI_KEY`, `JWT_SECRET`, and `GOOGLE_CLIENT_ID` only in Render environment variables.
+- Keep `SERPAPI_KEY`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, and `TELEGRAM_BOT_TOKEN` only in Render environment variables.
 - Add every public frontend origin to `NISA_ALLOWED_ORIGINS` so browser search calls are not blocked by CORS.

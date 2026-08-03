@@ -39,6 +39,35 @@ function publicUser(user) {
   return { id: user.id, email: user.email };
 }
 
+async function notifyTelegramLogin() {
+  const botToken = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
+  const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
+  if (!botToken || !chatId) return;
+
+  const message = [
+    "NiSa login",
+    "A verified Google user signed in.",
+    `Time: ${new Date().toISOString()}`
+  ].join("\n");
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        disable_web_page_preview: true
+      })
+    });
+    if (!response.ok) {
+      console.warn(`Telegram login notification failed with ${response.status}.`);
+    }
+  } catch (error) {
+    console.warn(`Telegram login notification failed: ${error.message}`);
+  }
+}
+
 function getGoogleClient() {
   if (!process.env.GOOGLE_CLIENT_ID) throw new Error("GOOGLE_CLIENT_ID is not configured on the backend.");
   if (!googleClient) googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -100,6 +129,7 @@ app.post("/api/v1/auth/google", async (req, res) => {
 
     const { email, subject } = await verifyGoogleIdToken(idToken);
     const user = { id: subject, email };
+    void notifyTelegramLogin();
     res.json({ token: createToken(user), user: publicUser(user), isNewUser: false });
   } catch (error) {
     res.status(400).json({ message: error.message || "Unable to sign in with Google." });
