@@ -6,6 +6,7 @@ Current live frontend:
 
 ```text
 https://nisa-ecommerce.web.app
+https://nisa-ecommerce.firebaseapp.com
 https://nisa.ecommerce.nithishg.com
 ```
 

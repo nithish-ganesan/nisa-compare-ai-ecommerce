@@ -38,9 +38,16 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
         const result = await loginWithGoogle(idToken);
         onAuthenticated(result.user, result.token, Boolean(result.isNewUser));
       } catch (exception) {
-        const message = axios.isAxiosError(exception) && typeof exception.response?.data?.message === "string"
-          ? exception.response.data.message
-          : "Unable to sign in with Google. Please try again.";
+        let message = "Unable to sign in with Google. Please try again.";
+        if (axios.isAxiosError(exception)) {
+          if (typeof exception.response?.data?.message === "string") {
+            message = exception.response.data.message;
+          } else if (exception.code === "ECONNABORTED") {
+            message = "Google sign-in is taking too long. Please try again.";
+          } else if (exception.message) {
+            message = `Google sign-in failed: ${exception.message}`;
+          }
+        }
         setError(message);
       } finally {
         setSubmitting(false);

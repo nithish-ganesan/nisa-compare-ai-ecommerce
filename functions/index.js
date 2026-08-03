@@ -7,6 +7,7 @@ const { OAuth2Client } = require("google-auth-library");
 const app = express();
 const defaultAllowedOrigins = [
   "https://nisa-ecommerce.web.app",
+  "https://nisa-ecommerce.firebaseapp.com",
   "https://nisa.ecommerce.nithishg.com"
 ];
 const allowedOrigins = [
