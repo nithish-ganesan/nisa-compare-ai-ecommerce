@@ -20,6 +20,10 @@ type AuthPageProps = {
   onAuthenticated: (user: AuthUser, token: string, isNewUser: boolean) => void;
 };
 
+function isLinkedInInAppBrowser(userAgent: string) {
+  return /linkedin|linkedinapp|librowser/i.test(userAgent);
+}
+
 export function AuthPage({ onAuthenticated }: AuthPageProps) {
   const [error, setError] = useState("");
   const [googleUnavailable, setGoogleUnavailable] = useState(false);
@@ -27,13 +31,25 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
   const siteUrl = window.location.origin;
-  const isIosLinkedInBrowser = /iP(hone|ad|od)/i.test(navigator.userAgent) && /LinkedInApp/i.test(navigator.userAgent);
+  const isIosLinkedInBrowser = /iP(hone|ad|od)/i.test(navigator.userAgent) && isLinkedInInAppBrowser(navigator.userAgent);
 
   useEffect(() => {
     if (!googleClientId || !googleButtonRef.current) return;
 
     let cancelled = false;
+    let googleLoadTimer = 0;
     const clientId = googleClientId;
+
+    function showBrowserFallback() {
+      if (cancelled) return;
+      setGoogleUnavailable(true);
+      setError(
+        isIosLinkedInBrowser
+          ? "LinkedIn on iPhone blocked Google sign-in. Copy this link and open it in Safari or Chrome."
+          : "Unable to load Google sign-in. Open this site in your browser and try again."
+      );
+    }
+
     async function handleGoogleCredential(idToken: string) {
       setSubmitting(true);
       setError("");
@@ -59,7 +75,9 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
     function renderGoogleButton() {
       if (cancelled || !window.google || !googleButtonRef.current) return;
+      window.clearTimeout(googleLoadTimer);
       setGoogleUnavailable(false);
+      setError("");
       googleButtonRef.current.innerHTML = "";
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -78,17 +96,29 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
       });
     }
 
+    if (isIosLinkedInBrowser) {
+      showBrowserFallback();
+    }
+
     if (window.google) {
       renderGoogleButton();
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+        window.clearTimeout(googleLoadTimer);
+      };
     }
+
+    googleLoadTimer = window.setTimeout(showBrowserFallback, 3500);
 
     const existingScript = document.querySelector<HTMLScriptElement>("script[src='https://accounts.google.com/gsi/client']");
     if (existingScript) {
       existingScript.addEventListener("load", renderGoogleButton, { once: true });
+      existingScript.addEventListener("error", showBrowserFallback, { once: true });
       return () => {
         cancelled = true;
+        window.clearTimeout(googleLoadTimer);
         existingScript.removeEventListener("load", renderGoogleButton);
+        existingScript.removeEventListener("error", showBrowserFallback);
       };
     }
 
@@ -97,21 +127,14 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
     script.async = true;
     script.defer = true;
     script.addEventListener("load", renderGoogleButton, { once: true });
-    script.addEventListener("error", () => {
-      if (!cancelled) {
-        setGoogleUnavailable(true);
-        setError(
-          isIosLinkedInBrowser
-            ? "LinkedIn on iPhone blocked Google sign-in. Open this site in Safari or Chrome and try again."
-            : "Unable to load Google sign-in. Open this site in your browser and try again."
-        );
-      }
-    });
+    script.addEventListener("error", showBrowserFallback, { once: true });
     document.head.appendChild(script);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(googleLoadTimer);
       script.removeEventListener("load", renderGoogleButton);
+      script.removeEventListener("error", showBrowserFallback);
     };
   }, [googleClientId, isIosLinkedInBrowser, onAuthenticated]);
 
