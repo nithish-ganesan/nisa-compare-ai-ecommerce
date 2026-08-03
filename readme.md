@@ -17,7 +17,7 @@ https://nisa.ecommerce.nithishg.com
 - Lucide React for UI icons.
 - Node.js and Express for the API in `functions/`.
 - MongoDB Atlas with Mongoose for persistent customer accounts.
-- bcrypt password hashing and JSON Web Tokens (JWT) for authentication sessions.
+- bcrypt password hashing, Google Sign-In verification, and JSON Web Tokens (JWT) for authentication sessions.
 - Render Web Service for the currently used production API.
 - Dockerfile for the Render Docker web service.
 - SerpAPI Google Shopping adapter for live product comparison data.
@@ -26,15 +26,17 @@ https://nisa.ecommerce.nithishg.com
 
 ## Current POC Flow
 
-- New customers register once with an email address and password.
+- New customers can sign in with a verified Google account, which prevents fake Gmail addresses.
+- Email/password registration remains available as a fallback.
 - Passwords are salted and hashed before storage; plaintext passwords are never saved.
-- Returning customers log in with the same credentials. Logout clears their local session.
+- Returning customers log in with Google or their existing password credentials. Logout clears their local session.
 - Daily sales are loaded from the backend `/sales` endpoint.
 - Product search uses the backend `/compare` endpoint.
 - Production frontend uses this Render API URL from `frontend/.env.production`:
 
 ```bash
 VITE_API_URL=https://nisa-compare-ai-ecommerce.onrender.com/api/v1
+VITE_GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 ```
 
 ## Project Structure
@@ -96,6 +98,8 @@ Required environment variables:
 SERPAPI_KEY=your-serpapi-key
 MONGODB_URI=mongodb+srv://database-user:database-password@cluster.mongodb.net/nisa_ecommerce?retryWrites=true&w=majority
 JWT_SECRET=a-long-random-secret-with-at-least-32-characters
+GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+NISA_GOOGLE_ALLOWED_DOMAINS=gmail.com
 NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
 
@@ -113,6 +117,7 @@ Endpoints:
 GET  /api/v1/health
 POST /api/v1/auth/register
 POST /api/v1/auth/login
+POST /api/v1/auth/google
 GET  /api/v1/auth/me
 GET  /api/v1/sales
 POST /api/v1/compare
@@ -140,8 +145,34 @@ Set Render environment variables:
 SERPAPI_KEY=your-serpapi-key
 MONGODB_URI=your-atlas-connection-string
 JWT_SECRET=a-long-random-secret-with-at-least-32-characters
+GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+NISA_GOOGLE_ALLOWED_DOMAINS=gmail.com
 NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
+
+## Enable Google Sign-In
+
+Create a Google OAuth web client in Google Cloud Console and add these authorized JavaScript origins:
+
+```text
+https://nisa-ecommerce.web.app
+https://nisa.ecommerce.nithishg.com
+http://127.0.0.1:5173
+http://127.0.0.1:5175
+```
+
+Set the same OAuth client ID in both places:
+
+```bash
+# frontend/.env.production
+VITE_GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+
+# Render backend environment
+GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+NISA_GOOGLE_ALLOWED_DOMAINS=gmail.com
+```
+
+`NISA_GOOGLE_ALLOWED_DOMAINS` defaults to `gmail.com`. Set it to `*` if you want to allow any verified Google account, including Google Workspace emails.
 
 If Render does not deploy automatically after a git push, confirm that the service is connected to the same GitHub repo and watching the `develop` branch.
 

@@ -1,7 +1,20 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { ArrowRight, BadgeIndianRupee, ChartNoAxesCombined, LockKeyhole, Mail, ShoppingBag, UserPlus } from "lucide-react";
-import { loginAccount, registerAccount, type AuthUser } from "../services/commerceApi";
+import { loginAccount, loginWithGoogle, registerAccount, type AuthUser } from "../services/commerceApi";
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void;
+          renderButton: (parent: HTMLElement, options: Record<string, string | number | boolean>) => void;
+        };
+      };
+    };
+  }
+}
 
 type AuthPageProps = {
   onAuthenticated: (user: AuthUser, token: string, isNewUser: boolean) => void;
@@ -14,7 +27,80 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
   const isRegistering = mode === "register";
+
+  useEffect(() => {
+    if (!googleClientId || !googleButtonRef.current) return;
+
+    let cancelled = false;
+    const clientId = googleClientId;
+    async function handleGoogleCredential(idToken: string) {
+      setSubmitting(true);
+      setError("");
+      try {
+        const result = await loginWithGoogle(idToken);
+        onAuthenticated(result.user, result.token, Boolean(result.isNewUser));
+      } catch (exception) {
+        const message = axios.isAxiosError(exception) && typeof exception.response?.data?.message === "string"
+          ? exception.response.data.message
+          : "Unable to sign in with Google. Please try again.";
+        setError(message);
+      } finally {
+        setSubmitting(false);
+      }
+    }
+
+    function renderGoogleButton() {
+      if (cancelled || !window.google || !googleButtonRef.current) return;
+      googleButtonRef.current.innerHTML = "";
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response) => {
+          if (response.credential) void handleGoogleCredential(response.credential);
+          else setError("Google did not return a sign-in token. Please try again.");
+        }
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "rectangular",
+        logo_alignment: "left",
+        width: 360
+      });
+    }
+
+    if (window.google) {
+      renderGoogleButton();
+      return () => { cancelled = true; };
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>("script[src='https://accounts.google.com/gsi/client']");
+    if (existingScript) {
+      existingScript.addEventListener("load", renderGoogleButton, { once: true });
+      return () => {
+        cancelled = true;
+        existingScript.removeEventListener("load", renderGoogleButton);
+      };
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.addEventListener("load", renderGoogleButton, { once: true });
+    script.addEventListener("error", () => {
+      if (!cancelled) setError("Unable to load Google sign-in. Please check your connection and try again.");
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      cancelled = true;
+      script.removeEventListener("load", renderGoogleButton);
+    };
+  }, [googleClientId, onAuthenticated]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,6 +147,14 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
         <p className="auth-eyebrow">Enterprise commerce intelligence</p>
         <h1 id="auth-title">{isRegistering ? "Create your account" : "Welcome back"}</h1>
         <p className="auth-copy">{isRegistering ? "Register once to access product comparisons and sale intelligence." : "Log in to continue to your commerce workspace."}</p>
+        <div className="google-auth-block">
+          {googleClientId ? (
+            <div ref={googleButtonRef} className="google-auth-button" aria-label="Continue with Google" />
+          ) : (
+            <p className="google-auth-missing">Set VITE_GOOGLE_CLIENT_ID to enable Google sign-in.</p>
+          )}
+        </div>
+        <div className="auth-divider"><span>or use email</span></div>
         <div className="auth-tabs" role="tablist" aria-label="Account access">
           <button type="button" className={!isRegistering ? "active" : ""} onClick={() => { setMode("login"); setError(""); }}>Log in</button>
           <button type="button" className={isRegistering ? "active" : ""} onClick={() => { setMode("register"); setError(""); }}>Register</button>

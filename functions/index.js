@@ -3,6 +3,7 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const { OAuth2Client } = require("google-auth-library");
 
 const app = express();
 const defaultAllowedOrigins = [
@@ -30,11 +31,14 @@ app.use(cors({
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  passwordHash: { type: String, required: true },
+  passwordHash: { type: String },
+  authProvider: { type: String, enum: ["password", "google"], default: "password" },
+  googleSubject: { type: String, unique: true, sparse: true },
   createdAt: { type: Date, default: Date.now }
 }, { versionKey: false });
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 let databaseConnection;
+let googleClient;
 
 async function connectDatabase() {
   if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is not configured on the backend.");
@@ -56,6 +60,37 @@ function createToken(user) {
 
 function publicUser(user) {
   return { id: user.id, email: user.email };
+}
+
+function getGoogleClient() {
+  if (!process.env.GOOGLE_CLIENT_ID) throw new Error("GOOGLE_CLIENT_ID is not configured on the backend.");
+  if (!googleClient) googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  return googleClient;
+}
+
+function allowedGoogleDomains() {
+  return String(process.env.NISA_GOOGLE_ALLOWED_DOMAINS || "gmail.com")
+    .split(",")
+    .map((domain) => domain.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function verifyGoogleIdToken(idToken) {
+  const ticket = await getGoogleClient().verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID
+  });
+  const payload = ticket.getPayload();
+  const email = String(payload?.email || "").trim().toLowerCase();
+  const subject = String(payload?.sub || "").trim();
+  if (!email || !subject) throw new Error("Google did not return a complete account profile.");
+  if (payload.email_verified !== true) throw new Error("Please use a verified Google account.");
+
+  const domains = allowedGoogleDomains();
+  if (!domains.includes("*") && !domains.some((domain) => email.endsWith(`@${domain}`))) {
+    throw new Error(`Please sign in with ${domains.join(" or ")}.`);
+  }
+  return { email, subject };
 }
 
 function readCredentials(body) {
@@ -105,12 +140,37 @@ app.post("/api/v1/auth/login", async (req, res) => {
     await connectDatabase();
     const { email, password } = readCredentials(req.body);
     const user = await User.findOne({ email });
+    if (user && !user.passwordHash) {
+      return res.status(401).json({ message: "This account uses Google sign-in. Continue with Google." });
+    }
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({ message: "Email or password is incorrect." });
     }
     res.json({ token: createToken(user), user: publicUser(user) });
   } catch (error) {
     res.status(400).json({ message: error.message || "Unable to log in." });
+  }
+});
+
+app.post("/api/v1/auth/google", async (req, res) => {
+  try {
+    await connectDatabase();
+    const idToken = String(req.body.idToken || "");
+    if (!idToken) return res.status(400).json({ message: "Google sign-in token is required." });
+
+    const { email, subject } = await verifyGoogleIdToken(idToken);
+    let user = await User.findOne({ $or: [{ googleSubject: subject }, { email }] });
+    const isNewUser = !user;
+    if (!user) {
+      user = await User.create({ email, authProvider: "google", googleSubject: subject });
+    } else if (!user.googleSubject || user.authProvider !== "google") {
+      user.googleSubject = subject;
+      user.authProvider = "google";
+      await user.save();
+    }
+    res.status(isNewUser ? 201 : 200).json({ token: createToken(user), user: publicUser(user), isNewUser });
+  } catch (error) {
+    res.status(400).json({ message: error.message || "Unable to sign in with Google." });
   }
 });
 

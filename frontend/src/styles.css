@@ -72,6 +72,14 @@ button, input { font: inherit; }
 .auth-eyebrow { margin: 30px 0 9px; color: #f5d36f; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; }
 .auth-panel h1 { margin: 0; font-size: 2rem; }
 .auth-copy { margin: 12px 0 24px; color: #cbd5e1; line-height: 1.5; }
+.google-auth-block { min-height: 44px; display: grid; justify-items: stretch; margin-bottom: 18px; }
+.google-auth-button { width: 100%; min-height: 44px; overflow: hidden; }
+.google-auth-button > div,
+.google-auth-button iframe { width: 100% !important; }
+.google-auth-missing { margin: 0; padding: 12px; color: #fde68a; background: rgba(245, 211, 111, 0.08); border: 1px solid rgba(245, 211, 111, 0.22); border-radius: 5px; font-size: 0.86rem; line-height: 1.45; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; color: #94a3b8; font-size: 0.76rem; font-weight: 800; text-transform: uppercase; }
+.auth-divider::before,
+.auth-divider::after { content: ""; height: 1px; flex: 1; background: rgba(148, 163, 184, 0.24); }
 .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid rgba(148, 163, 184, 0.24); }
 .auth-tabs button { min-height: 42px; border: 0; border-bottom: 2px solid transparent; color: #94a3b8; background: transparent; cursor: pointer; font-weight: 800; }
 .auth-tabs button.active { color: #f8fafc; border-bottom-color: #5eead4; }

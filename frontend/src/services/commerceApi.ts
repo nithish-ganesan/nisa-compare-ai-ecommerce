@@ -38,6 +38,11 @@ export async function loginAccount(email: string, password: string): Promise<Aut
   return response.data;
 }
 
+export async function loginWithGoogle(idToken: string): Promise<AuthResponse & { isNewUser?: boolean }> {
+  const response = await api.post<AuthResponse & { isNewUser?: boolean }>("/auth/google", { idToken });
+  return response.data;
+}
+
 export async function fetchCurrentUser(): Promise<AuthUser> {
   const response = await api.get<{ user: AuthUser }>("/auth/me");
   return response.data.user;
