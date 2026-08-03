@@ -96,9 +96,25 @@ button, input { font: inherit; }
 }
 
 @media (max-width: 520px) {
-  .auth-page { padding: 22px 14px; }
+  .auth-page {
+    min-height: 100svh;
+    align-items: start;
+    padding: max(18px, env(safe-area-inset-top)) 14px 18px;
+    overflow: auto;
+  }
   .auth-welcome { display: none; }
-  .auth-panel { padding: 26px 20px; }
+  .auth-panel {
+    width: min(100%, 390px);
+    margin-top: 10px;
+    padding: 22px 18px;
+  }
+  .auth-brand strong { font-size: 2rem; }
+  .auth-brand span { font-size: 1.22rem; }
+  .auth-eyebrow { margin: 24px 0 9px; font-size: 0.72rem; line-height: 1.35; }
+  .auth-panel h1 { font-size: 1.82rem; line-height: 1.08; }
+  .auth-copy { margin: 12px 0 20px; font-size: 0.98rem; line-height: 1.45; }
+  .google-auth-block { margin-bottom: 14px; }
+  .google-auth-button { display: grid; justify-items: stretch; max-width: 100%; }
   .browser-fallback { grid-template-columns: 1fr; }
 }
 

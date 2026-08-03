@@ -78,6 +78,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
       window.clearTimeout(googleLoadTimer);
       setGoogleUnavailable(false);
       setError("");
+      const buttonWidth = Math.min(360, Math.max(240, Math.floor(googleButtonRef.current.clientWidth)));
       googleButtonRef.current.innerHTML = "";
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -92,7 +93,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
         text: "continue_with",
         shape: "rectangular",
         logo_alignment: "left",
-        width: 360
+        width: buttonWidth
       });
     }
 
