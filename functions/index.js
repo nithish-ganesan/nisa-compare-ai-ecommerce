@@ -39,11 +39,8 @@ function publicUser(user) {
   return { id: user.id, email: user.email };
 }
 
-function maskEmail(email) {
-  const [name, domain] = String(email || "").trim().toLowerCase().split("@");
-  if (!name || !domain) return "unknown";
-  const visible = name.slice(0, Math.min(2, name.length));
-  return `${visible}***@${domain}`;
+function unmaskEmail(email) {
+  return String(email || "").trim().toLowerCase();
 }
 
 async function notifyTelegramLogin(user) {
