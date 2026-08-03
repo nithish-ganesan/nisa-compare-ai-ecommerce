@@ -28,7 +28,7 @@ https://nisa.ecommerce.nithishg.com
 
 - New customers sign in with a verified Google account, which prevents fake Gmail addresses.
 - Returning customers log in with Google. Logout clears their local session.
-- Successful Google logins can be sent to Telegram when Telegram env vars are configured. Alerts do not include user email addresses.
+- Successful Google logins can be sent to Telegram when Telegram env vars are configured. Alerts include a masked email address.
 - Daily sales are loaded from the backend `/sales` endpoint.
 - Product search uses the backend `/compare` endpoint.
 - Production frontend uses this Render API URL from `frontend/.env.production`:
@@ -168,7 +168,7 @@ TELEGRAM_CHAT_ID=your-telegram-chat-id
 
 If either value is missing, login still works and Telegram alerts are skipped.
 
-Telegram alerts only include a login event and timestamp. They do not include the signed-in user's email address.
+Telegram alerts include a masked email address and timestamp, for example `ni***@gmail.com`.
 
 ## Enable Google Sign-In
 

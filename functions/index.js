@@ -39,14 +39,21 @@ function publicUser(user) {
   return { id: user.id, email: user.email };
 }
 
-async function notifyTelegramLogin() {
+function maskEmail(email) {
+  const [name, domain] = String(email || "").toLowerCase().split("@");
+  if (!name || !domain) return "unknown";
+  const visible = name.slice(0, Math.min(2, name.length));
+  return `${visible}***@${domain}`;
+}
+
+async function notifyTelegramLogin(user) {
   const botToken = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
   const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
   if (!botToken || !chatId) return;
 
   const message = [
     "NiSa login",
-    "A verified Google user signed in.",
+    `Email: ${maskEmail(user.email)}`,
     `Time: ${new Date().toISOString()}`
   ].join("\n");
 
@@ -129,7 +136,7 @@ app.post("/api/v1/auth/google", async (req, res) => {
 
     const { email, subject } = await verifyGoogleIdToken(idToken);
     const user = { id: subject, email };
-    void notifyTelegramLogin();
+    void notifyTelegramLogin(user);
     res.json({ token: createToken(user), user: publicUser(user), isNewUser: false });
   } catch (error) {
     res.status(400).json({ message: error.message || "Unable to sign in with Google." });
