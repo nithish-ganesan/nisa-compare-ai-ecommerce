@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { BadgeIndianRupee, ChartNoAxesCombined, ShoppingBag } from "lucide-react";
+import { BadgeIndianRupee, Clipboard, ExternalLink, ChartNoAxesCombined, ShoppingBag } from "lucide-react";
 import { loginWithGoogle, type AuthUser } from "../services/commerceApi";
 
 declare global {
@@ -22,9 +22,12 @@ type AuthPageProps = {
 
 export function AuthPage({ onAuthenticated }: AuthPageProps) {
   const [error, setError] = useState("");
+  const [googleUnavailable, setGoogleUnavailable] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+  const siteUrl = window.location.origin;
+  const isIosLinkedInBrowser = /iP(hone|ad|od)/i.test(navigator.userAgent) && /LinkedInApp/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (!googleClientId || !googleButtonRef.current) return;
@@ -56,6 +59,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
     function renderGoogleButton() {
       if (cancelled || !window.google || !googleButtonRef.current) return;
+      setGoogleUnavailable(false);
       googleButtonRef.current.innerHTML = "";
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -94,7 +98,14 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
     script.defer = true;
     script.addEventListener("load", renderGoogleButton, { once: true });
     script.addEventListener("error", () => {
-      if (!cancelled) setError("Unable to load Google sign-in. Please check your connection and try again.");
+      if (!cancelled) {
+        setGoogleUnavailable(true);
+        setError(
+          isIosLinkedInBrowser
+            ? "LinkedIn on iPhone blocked Google sign-in. Open this site in Safari or Chrome and try again."
+            : "Unable to load Google sign-in. Open this site in your browser and try again."
+        );
+      }
     });
     document.head.appendChild(script);
 
@@ -102,7 +113,16 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
       cancelled = true;
       script.removeEventListener("load", renderGoogleButton);
     };
-  }, [googleClientId, onAuthenticated]);
+  }, [googleClientId, isIosLinkedInBrowser, onAuthenticated]);
+
+  async function copySiteLink() {
+    try {
+      await navigator.clipboard.writeText(siteUrl);
+      setError("Link copied. Open it in Safari or Chrome and sign in again.");
+    } catch {
+      setError(`Open this link in Safari or Chrome: ${siteUrl}`);
+    }
+  }
 
   return (
     <main className="auth-page">
@@ -133,6 +153,18 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
             <p className="google-auth-missing">Set VITE_GOOGLE_CLIENT_ID to enable Google sign-in.</p>
           )}
         </div>
+        {googleUnavailable && (
+          <div className="browser-fallback" aria-label="Browser sign-in options">
+            <a className="auth-secondary-action" href={siteUrl} target="_blank" rel="noreferrer">
+              <ExternalLink size={18} />
+              <span>Open site</span>
+            </a>
+            <button className="auth-secondary-action" type="button" onClick={copySiteLink}>
+              <Clipboard size={18} />
+              <span>Copy link</span>
+            </button>
+          </div>
+        )}
         {submitting && <p className="auth-status">Please wait...</p>}
         {error && <p className="auth-error" role="alert">{error}</p>}
       </section>

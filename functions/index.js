@@ -40,7 +40,10 @@ function publicUser(user) {
 }
 
 function maskEmail(email) {
-  return String(email || "").trim();
+  const [name, domain] = String(email || "").trim().toLowerCase().split("@");
+  if (!name || !domain) return "unknown";
+  const visible = name.slice(0, Math.min(2, name.length));
+  return `${visible}***@${domain}`;
 }
 
 async function notifyTelegramLogin(user) {
