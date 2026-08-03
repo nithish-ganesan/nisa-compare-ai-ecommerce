@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const { OAuth2Client } = require("google-auth-library");
@@ -93,14 +92,6 @@ async function verifyGoogleIdToken(idToken) {
   return { email, subject };
 }
 
-function readCredentials(body) {
-  const email = String(body.email || "").trim().toLowerCase();
-  const password = String(body.password || "");
-  if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Enter a valid email address.");
-  if (password.length < 8) throw new Error("Password must be at least 8 characters.");
-  return { email, password };
-}
-
 async function requireAuthentication(req, res, next) {
   try {
     const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
@@ -121,35 +112,12 @@ app.get("/api/v1/health", (_req, res) => {
   res.json({ ok: true, service: "nisa-commerce-api" });
 });
 
-app.post("/api/v1/auth/register", async (req, res) => {
-  try {
-    await connectDatabase();
-    const { email, password } = readCredentials(req.body);
-    const existingUser = await User.exists({ email });
-    if (existingUser) return res.status(409).json({ message: "An account already exists for this email. Please log in." });
-    const passwordHash = await bcrypt.hash(password, 12);
-    const user = await User.create({ email, passwordHash });
-    res.status(201).json({ token: createToken(user), user: publicUser(user) });
-  } catch (error) {
-    res.status(400).json({ message: error.message || "Unable to create your account." });
-  }
+app.post("/api/v1/auth/register", (_req, res) => {
+  res.status(410).json({ message: "Email/password registration is disabled. Please continue with Google." });
 });
 
-app.post("/api/v1/auth/login", async (req, res) => {
-  try {
-    await connectDatabase();
-    const { email, password } = readCredentials(req.body);
-    const user = await User.findOne({ email });
-    if (user && !user.passwordHash) {
-      return res.status(401).json({ message: "This account uses Google sign-in. Continue with Google." });
-    }
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ message: "Email or password is incorrect." });
-    }
-    res.json({ token: createToken(user), user: publicUser(user) });
-  } catch (error) {
-    res.status(400).json({ message: error.message || "Unable to log in." });
-  }
+app.post("/api/v1/auth/login", (_req, res) => {
+  res.status(410).json({ message: "Email/password login is disabled. Please continue with Google." });
 });
 
 app.post("/api/v1/auth/google", async (req, res) => {

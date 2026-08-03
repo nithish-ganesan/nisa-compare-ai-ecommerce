@@ -28,16 +28,6 @@ export function hasSession() {
   return Boolean(window.localStorage.getItem(sessionKey));
 }
 
-export async function registerAccount(email: string, password: string): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>("/auth/register", { email, password });
-  return response.data;
-}
-
-export async function loginAccount(email: string, password: string): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>("/auth/login", { email, password });
-  return response.data;
-}
-
 export async function loginWithGoogle(idToken: string): Promise<AuthResponse & { isNewUser?: boolean }> {
   const response = await api.post<AuthResponse & { isNewUser?: boolean }>("/auth/google", { idToken });
   return response.data;

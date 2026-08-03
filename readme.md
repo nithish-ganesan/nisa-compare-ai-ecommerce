@@ -17,7 +17,7 @@ https://nisa.ecommerce.nithishg.com
 - Lucide React for UI icons.
 - Node.js and Express for the API in `functions/`.
 - MongoDB Atlas with Mongoose for persistent customer accounts.
-- bcrypt password hashing, Google Sign-In verification, and JSON Web Tokens (JWT) for authentication sessions.
+- Google Sign-In verification and JSON Web Tokens (JWT) for authentication sessions.
 - Render Web Service for the currently used production API.
 - Dockerfile for the Render Docker web service.
 - SerpAPI Google Shopping adapter for live product comparison data.
@@ -26,10 +26,9 @@ https://nisa.ecommerce.nithishg.com
 
 ## Current POC Flow
 
-- New customers can sign in with a verified Google account, which prevents fake Gmail addresses.
-- Email/password registration remains available as a fallback.
-- Passwords are salted and hashed before storage; plaintext passwords are never saved.
-- Returning customers log in with Google or their existing password credentials. Logout clears their local session.
+- New customers sign in with a verified Google account, which prevents fake Gmail addresses.
+- Email/password registration and login are disabled.
+- Returning customers log in with Google. Logout clears their local session.
 - Daily sales are loaded from the backend `/sales` endpoint.
 - Product search uses the backend `/compare` endpoint.
 - Production frontend uses this Render API URL from `frontend/.env.production`:
@@ -115,8 +114,8 @@ Endpoints:
 
 ```http
 GET  /api/v1/health
-POST /api/v1/auth/register
-POST /api/v1/auth/login
+POST /api/v1/auth/register  # disabled, returns 410
+POST /api/v1/auth/login     # disabled, returns 410
 POST /api/v1/auth/google
 GET  /api/v1/auth/me
 GET  /api/v1/sales
