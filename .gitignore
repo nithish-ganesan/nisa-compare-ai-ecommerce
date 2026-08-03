@@ -4,11 +4,6 @@ frontend/node_modules/
 
 # Build outputs
 frontend/dist/
-backend/target/
-target/
-
-# Local Maven/cache
-.m2/
 
 # Environment and secrets
 .env

@@ -27,7 +27,6 @@ https://nisa.ecommerce.nithishg.com
 ## Current POC Flow
 
 - New customers sign in with a verified Google account, which prevents fake Gmail addresses.
-- Email/password registration and login are disabled.
 - Returning customers log in with Google. Logout clears their local session.
 - Daily sales are loaded from the backend `/sales` endpoint.
 - Product search uses the backend `/compare` endpoint.
@@ -113,8 +112,6 @@ Endpoints:
 
 ```http
 GET  /api/v1/health
-POST /api/v1/auth/register  # disabled, returns 410
-POST /api/v1/auth/login     # disabled, returns 410
 POST /api/v1/auth/google
 GET  /api/v1/auth/me
 GET  /api/v1/sales

@@ -93,14 +93,6 @@ app.get("/api/v1/health", (_req, res) => {
   res.json({ ok: true, service: "nisa-commerce-api" });
 });
 
-app.post("/api/v1/auth/register", (_req, res) => {
-  res.status(410).json({ message: "Email/password registration is disabled. Please continue with Google." });
-});
-
-app.post("/api/v1/auth/login", (_req, res) => {
-  res.status(410).json({ message: "Email/password login is disabled. Please continue with Google." });
-});
-
 app.post("/api/v1/auth/google", async (req, res) => {
   try {
     const idToken = String(req.body.idToken || "");

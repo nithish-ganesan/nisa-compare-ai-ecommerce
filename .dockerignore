@@ -1,7 +1,6 @@
 .git
 .firebase
 .local-logs
-backend
 frontend
 **/node_modules
 **/dist
