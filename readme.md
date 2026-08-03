@@ -17,7 +17,6 @@ https://nisa.ecommerce.nithishg.com
 - Framer Motion for UI transitions.
 - Lucide React for UI icons.
 - Node.js and Express for the API in `functions/`.
-- MongoDB Atlas with Mongoose for persistent customer accounts.
 - Google Sign-In verification and JSON Web Tokens (JWT) for authentication sessions.
 - Render Web Service for the currently used production API.
 - Dockerfile for the Render Docker web service.
@@ -96,11 +95,10 @@ Required environment variables:
 
 ```bash
 SERPAPI_KEY=your-serpapi-key
-MONGODB_URI=mongodb+srv://database-user:database-password@cluster.mongodb.net/nisa_ecommerce?retryWrites=true&w=majority
 JWT_SECRET=a-long-random-secret-with-at-least-32-characters
 GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 NISA_GOOGLE_ALLOWED_DOMAINS=gmail.com
-NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
+NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa-ecommerce.firebaseapp.com,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
 
 Local API URL:
@@ -143,11 +141,10 @@ Set Render environment variables:
 
 ```bash
 SERPAPI_KEY=your-serpapi-key
-MONGODB_URI=your-atlas-connection-string
 JWT_SECRET=a-long-random-secret-with-at-least-32-characters
 GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 NISA_GOOGLE_ALLOWED_DOMAINS=gmail.com
-NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
+NISA_ALLOWED_ORIGINS=https://nisa-ecommerce.web.app,https://nisa-ecommerce.firebaseapp.com,https://nisa.ecommerce.nithishg.com,http://127.0.0.1:5173,http://127.0.0.1:5175
 ```
 
 ## Enable Google Sign-In
@@ -156,6 +153,7 @@ Create a Google OAuth web client in Google Cloud Console and add these authorize
 
 ```text
 https://nisa-ecommerce.web.app
+https://nisa-ecommerce.firebaseapp.com
 https://nisa.ecommerce.nithishg.com
 http://127.0.0.1:5173
 http://127.0.0.1:5175
@@ -212,6 +210,5 @@ Render should deploy automatically from `develop` when auto-deploy is enabled.
 ## Security Notes
 
 - Do not commit real API keys, Firebase service credentials, or provider credentials.
-- Keep `SERPAPI_KEY`, `MONGODB_URI`, and `JWT_SECRET` only in Render environment variables.
-- Use a MongoDB database user with `readWrite` access to the `nisa_ecommerce` database; do not use an Atlas administrator account for the app.
+- Keep `SERPAPI_KEY`, `JWT_SECRET`, and `GOOGLE_CLIENT_ID` only in Render environment variables.
 - Add every public frontend origin to `NISA_ALLOWED_ORIGINS` so browser search calls are not blocked by CORS.

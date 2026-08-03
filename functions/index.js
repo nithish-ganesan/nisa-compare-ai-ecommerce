@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
 const { OAuth2Client } = require("google-auth-library");
 
 const app = express();
@@ -29,33 +28,11 @@ app.use(cors({
   }
 }));
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  passwordHash: { type: String },
-  authProvider: { type: String, enum: ["password", "google"], default: "password" },
-  googleSubject: { type: String, unique: true, sparse: true },
-  createdAt: { type: Date, default: Date.now }
-}, { versionKey: false });
-const User = mongoose.models.User || mongoose.model("User", userSchema);
-let databaseConnection;
 let googleClient;
-
-async function connectDatabase() {
-  if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is not configured on the backend.");
-  if (!databaseConnection) {
-    databaseConnection = mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 8000 });
-  }
-  try {
-    await databaseConnection;
-  } catch (error) {
-    databaseConnection = undefined;
-    throw error;
-  }
-}
 
 function createToken(user) {
   if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not configured on the backend.");
-  return jwt.sign({ sub: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign({ sub: user.id, email: user.email, provider: "google" }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
 
 function publicUser(user) {
@@ -98,9 +75,12 @@ async function requireAuthentication(req, res, next) {
     const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
     if (!token) return res.status(401).json({ message: "Please log in to continue." });
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(payload.sub).select("email");
-    if (!user) return res.status(401).json({ message: "Your session has expired. Please log in again." });
-    req.user = user;
+    const email = String(payload.email || "").trim().toLowerCase();
+    const subject = String(payload.sub || "").trim();
+    if (!email || !subject || payload.provider !== "google") {
+      return res.status(401).json({ message: "Your session has expired. Please log in again." });
+    }
+    req.user = { id: subject, email };
     next();
   } catch (_error) {
     res.status(401).json({ message: "Your session has expired. Please log in again." });
@@ -123,21 +103,12 @@ app.post("/api/v1/auth/login", (_req, res) => {
 
 app.post("/api/v1/auth/google", async (req, res) => {
   try {
-    await connectDatabase();
     const idToken = String(req.body.idToken || "");
     if (!idToken) return res.status(400).json({ message: "Google sign-in token is required." });
 
     const { email, subject } = await verifyGoogleIdToken(idToken);
-    let user = await User.findOne({ $or: [{ googleSubject: subject }, { email }] });
-    const isNewUser = !user;
-    if (!user) {
-      user = await User.create({ email, authProvider: "google", googleSubject: subject });
-    } else if (!user.googleSubject || user.authProvider !== "google") {
-      user.googleSubject = subject;
-      user.authProvider = "google";
-      await user.save();
-    }
-    res.status(isNewUser ? 201 : 200).json({ token: createToken(user), user: publicUser(user), isNewUser });
+    const user = { id: subject, email };
+    res.json({ token: createToken(user), user: publicUser(user), isNewUser: false });
   } catch (error) {
     res.status(400).json({ message: error.message || "Unable to sign in with Google." });
   }
