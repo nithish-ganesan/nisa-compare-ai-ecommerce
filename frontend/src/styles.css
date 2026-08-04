@@ -12,16 +12,20 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100svh;
   background:
     radial-gradient(circle at 18% 14%, rgba(45, 212, 191, 0.24), transparent 34%),
     radial-gradient(circle at 82% 20%, rgba(245, 211, 111, 0.18), transparent 30%),
     linear-gradient(145deg, #05070d 0%, #111827 48%, #0b1020 100%);
 }
 
+#root { min-height: 100vh; min-height: 100svh; }
+
 button, input { font: inherit; }
 
 .auth-page {
   min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(390px, 460px);
   align-items: center;
@@ -72,10 +76,9 @@ button, input { font: inherit; }
 .auth-eyebrow { margin: 30px 0 9px; color: #f5d36f; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; }
 .auth-panel h1 { margin: 0; font-size: 2rem; }
 .auth-copy { margin: 12px 0 24px; color: #cbd5e1; line-height: 1.5; }
-.google-auth-block { min-height: 44px; display: grid; justify-items: stretch; margin-bottom: 18px; }
+.google-auth-block { width: 100%; min-height: 44px; display: grid; justify-items: stretch; margin-bottom: 18px; }
 .google-auth-button { width: 100%; min-height: 44px; overflow: hidden; }
-.google-auth-button > div,
-.google-auth-button iframe { width: 100% !important; }
+.google-auth-button > div { width: 100% !important; }
 .google-auth-missing { margin: 0; padding: 12px; color: #fde68a; background: rgba(245, 211, 111, 0.08); border: 1px solid rgba(245, 211, 111, 0.22); border-radius: 5px; font-size: 0.86rem; line-height: 1.45; }
 .browser-fallback { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: -4px 0 16px; }
 .auth-secondary-action { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: #e2e8f0; background: rgba(15, 23, 42, 0.82); border: 1px solid rgba(94, 234, 212, 0.28); border-radius: 5px; text-decoration: none; font-size: 0.9rem; font-weight: 800; cursor: pointer; }
@@ -97,15 +100,18 @@ button, input { font: inherit; }
 
 @media (max-width: 520px) {
   .auth-page {
-    min-height: 100svh;
-    align-items: start;
-    padding: max(18px, env(safe-area-inset-top)) 14px 18px;
+    min-height: 100dvh;
+    align-items: center;
+    justify-items: center;
+    align-content: center;
+    padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
     overflow: auto;
   }
   .auth-welcome { display: none; }
   .auth-panel {
-    width: min(100%, 390px);
-    margin-top: 10px;
+    width: 100%;
+    max-width: 400px;
+    margin: auto 0;
     padding: 22px 18px;
   }
   .auth-brand strong { font-size: 2rem; }

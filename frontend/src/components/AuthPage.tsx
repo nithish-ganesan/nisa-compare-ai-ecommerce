@@ -38,6 +38,8 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
     let cancelled = false;
     let googleLoadTimer = 0;
+    let layoutTimer = 0;
+    let lastButtonWidth = 0;
     const clientId = googleClientId;
 
     function showBrowserFallback() {
@@ -73,12 +75,20 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
       }
     }
 
+    function getGoogleButtonWidth() {
+      if (!googleButtonRef.current) return 240;
+      const width = googleButtonRef.current.getBoundingClientRect().width;
+      return Math.min(400, Math.max(240, Math.floor(width)));
+    }
+
     function renderGoogleButton() {
       if (cancelled || !window.google || !googleButtonRef.current) return;
       window.clearTimeout(googleLoadTimer);
       setGoogleUnavailable(false);
       setError("");
-      const buttonWidth = Math.min(360, Math.max(240, Math.floor(googleButtonRef.current.clientWidth)));
+      const buttonWidth = getGoogleButtonWidth();
+      if (buttonWidth === lastButtonWidth && googleButtonRef.current.childElementCount > 0) return;
+      lastButtonWidth = buttonWidth;
       googleButtonRef.current.innerHTML = "";
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -97,15 +107,28 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
       });
     }
 
+    function renderGoogleButtonAfterLayout() {
+      window.requestAnimationFrame(renderGoogleButton);
+      window.clearTimeout(layoutTimer);
+      layoutTimer = window.setTimeout(renderGoogleButton, 150);
+    }
+
+    const buttonResizeObserver = new ResizeObserver(renderGoogleButtonAfterLayout);
+    buttonResizeObserver.observe(googleButtonRef.current);
+
     if (isIosLinkedInBrowser) {
       showBrowserFallback();
     }
 
     if (window.google) {
-      renderGoogleButton();
+      renderGoogleButtonAfterLayout();
+      window.addEventListener("resize", renderGoogleButtonAfterLayout);
       return () => {
         cancelled = true;
         window.clearTimeout(googleLoadTimer);
+        window.clearTimeout(layoutTimer);
+        buttonResizeObserver.disconnect();
+        window.removeEventListener("resize", renderGoogleButtonAfterLayout);
       };
     }
 
@@ -113,13 +136,17 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
     const existingScript = document.querySelector<HTMLScriptElement>("script[src='https://accounts.google.com/gsi/client']");
     if (existingScript) {
-      existingScript.addEventListener("load", renderGoogleButton, { once: true });
+      existingScript.addEventListener("load", renderGoogleButtonAfterLayout, { once: true });
       existingScript.addEventListener("error", showBrowserFallback, { once: true });
+      window.addEventListener("resize", renderGoogleButtonAfterLayout);
       return () => {
         cancelled = true;
         window.clearTimeout(googleLoadTimer);
-        existingScript.removeEventListener("load", renderGoogleButton);
+        window.clearTimeout(layoutTimer);
+        buttonResizeObserver.disconnect();
+        existingScript.removeEventListener("load", renderGoogleButtonAfterLayout);
         existingScript.removeEventListener("error", showBrowserFallback);
+        window.removeEventListener("resize", renderGoogleButtonAfterLayout);
       };
     }
 
@@ -127,15 +154,19 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
-    script.addEventListener("load", renderGoogleButton, { once: true });
+    script.addEventListener("load", renderGoogleButtonAfterLayout, { once: true });
     script.addEventListener("error", showBrowserFallback, { once: true });
     document.head.appendChild(script);
+    window.addEventListener("resize", renderGoogleButtonAfterLayout);
 
     return () => {
       cancelled = true;
       window.clearTimeout(googleLoadTimer);
-      script.removeEventListener("load", renderGoogleButton);
+      window.clearTimeout(layoutTimer);
+      buttonResizeObserver.disconnect();
+      script.removeEventListener("load", renderGoogleButtonAfterLayout);
       script.removeEventListener("error", showBrowserFallback);
+      window.removeEventListener("resize", renderGoogleButtonAfterLayout);
     };
   }, [googleClientId, isIosLinkedInBrowser, onAuthenticated]);
 
