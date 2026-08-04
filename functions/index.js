@@ -39,8 +39,8 @@ function publicUser(user) {
   return { id: user.id, email: user.email };
 }
 
-function unmaskEmail(email) {
-  return String(email || "").trim().toLowerCase();
+function maskEmail(email) {
+  return String(email || "").trim();
 }
 
 async function notifyTelegramLogin(user) {
